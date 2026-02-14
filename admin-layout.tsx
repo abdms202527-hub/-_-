@@ -122,7 +122,7 @@ const AdminLayout: React.FC = () => {
                
                <div className="mt-8 pt-8 border-t border-slate-100 text-center">
                   <p className="text-slate-400 text-xs font-devanagari">
-                    कहाँ मिलेगा? Supabase Project > Settings > API
+                    कहाँ मिलेगा? Supabase Project &rarr; Settings &rarr; API
                   </p>
                </div>
             </div>
