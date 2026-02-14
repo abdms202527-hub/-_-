@@ -25,20 +25,30 @@ CREATE TABLE IF NOT EXISTS notices (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- 4. MEDIA TABLE (Ensuring title exists for Media Gallery)
+-- 4. MEDIA TABLE (Updated with file_name for better compatibility)
 CREATE TABLE IF NOT EXISTS media (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   url TEXT NOT NULL,
   title TEXT DEFAULT 'Untitled Image',
+  file_name TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- If table already exists but title is missing, add it manually
+-- Fix constraints if they exist
 DO $$
 BEGIN
+    -- Ensure title exists
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='media' AND column_name='title') THEN
         ALTER TABLE media ADD COLUMN title TEXT DEFAULT 'Untitled Image';
     END IF;
+    
+    -- Ensure file_name exists
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='media' AND column_name='file_name') THEN
+        ALTER TABLE media ADD COLUMN file_name TEXT;
+    END IF;
+
+    -- Drop NOT NULL constraint on file_name to prevent future errors
+    ALTER TABLE media ALTER COLUMN file_name DROP NOT NULL;
 END $$;
 
 -- 5. SITE SETTINGS TABLE
@@ -96,7 +106,3 @@ BEGIN
     DROP POLICY IF EXISTS "Admin modify settings" ON site_settings;
     CREATE POLICY "Admin modify settings" ON site_settings FOR ALL USING (true);
 END $$;
-
--- IMPORTANT: If you still see "Could not find column", please go to 
--- Supabase Dashboard -> Project Settings -> API -> "PostgREST Reload" (if available)
--- Or simply wait 2-3 minutes for the schema cache to automatically refresh.

@@ -30,19 +30,21 @@ export const isSupabaseConfigured = () => {
 
 /**
  * Google Drive लिंक्स को Direct Image लिंक्स में बदलने के लिए उन्नत हेल्पर
+ * यह गूगल के 'lh3' इंफ्रास्ट्रक्चर का उपयोग करता है जो सबसे विश्वसनीय है।
  */
 export const convertDriveLink = (url: string): string => {
   if (!url) return '';
   
-  // अगर पहले से डायरेक्ट लिंक है तो कुछ न करें
-  if (url.includes('drive.google.com/uc')) return url;
+  // अगर लिंक पहले से बदला जा चुका है तो वापस न बदलें
+  if (url.includes('googleusercontent.com/d/')) return url;
 
   if (url.includes('drive.google.com')) {
-    // विभिन्न ड्राइव फॉर्मेट्स के लिए Regex सुधार
+    // फाइल ID निकालने के लिए एडवांस Regex (handle /file/d/ID/view, ?id=ID, etc.)
     const fileIdMatch = url.match(/\/d\/(.+?)([/?#]|$)/) || url.match(/id=(.+?)([&#]|$)/);
     
     if (fileIdMatch && fileIdMatch[1]) {
-      return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
+      // यह फॉर्मेट सीधा इमेज स्ट्रीम करता है जिससे CORS की समस्या नहीं आती
+      return `https://lh3.googleusercontent.com/d/${fileIdMatch[1]}`;
     }
   }
   return url;

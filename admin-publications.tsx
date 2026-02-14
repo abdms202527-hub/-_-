@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Trash2, Edit2, Loader2, AlertCircle, X, Check, Star, RefreshCw } from 'lucide-react';
+import { Plus, Search, Trash2, Edit2, Loader2, AlertCircle, X, Check, Star, RefreshCw, ImageIcon, Camera } from 'lucide-react';
 import { supabase, convertDriveLink } from './lib/supabase.ts';
 import { Publication } from './types.ts';
 
@@ -12,9 +12,12 @@ const AdminPublications: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>(['पत्रिका', 'विशेषांक']);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
+  const [mediaItems, setMediaItems] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+  const [previewLoaded, setPreviewLoaded] = useState(false);
   
   const initialFormState = { title: '', category: 'पत्रिका', year: new Date().getFullYear().toString(), flipbook_url: '', cover_url: '', description: '', is_latest: true };
   const [formData, setFormData] = useState(initialFormState);
@@ -41,7 +44,20 @@ const AdminPublications: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchPubs(); }, []);
+  const fetchMedia = async () => {
+    try {
+      const { data, error } = await supabase.from('media').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      setMediaItems(data || []);
+    } catch (err) {
+      console.error("Error fetching media:", err);
+    }
+  };
+
+  useEffect(() => { 
+    fetchPubs(); 
+    fetchMedia();
+  }, []);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,8 +68,6 @@ const AdminPublications: React.FC = () => {
 
     try {
       setSaving(true);
-      
-      // Drive Link को डायरेक्ट इमेज लिंक में बदलें
       const finalCoverUrl = convertDriveLink(formData.cover_url);
       
       const payload: any = {
@@ -72,7 +86,6 @@ const AdminPublications: React.FC = () => {
       }
 
       const { error } = await supabase.from('publications').upsert(payload);
-      
       if (error) throw error;
       
       showStatus(editingId ? "प्रकाशन अपडेट हुआ!" : "नया प्रकाशन जोड़ा गया!");
@@ -102,9 +115,8 @@ const AdminPublications: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in pb-10 relative">
-      {/* Status Toast */}
       {statusMsg && (
-        <div className={`fixed bottom-10 right-10 z-[200] px-6 py-4 rounded-2xl shadow-2xl animate-in slide-in-from-right duration-300 flex items-center gap-3 border ${statusMsg.type === 'success' ? 'bg-blue-600 text-white border-blue-500' : 'bg-red-600 text-white border-red-500'}`}>
+        <div className={`fixed bottom-10 right-10 z-[500] px-6 py-4 rounded-2xl shadow-2xl animate-in slide-in-from-right duration-300 flex items-center gap-3 border ${statusMsg.type === 'success' ? 'bg-blue-600 text-white border-blue-500' : 'bg-red-600 text-white border-red-500'}`}>
           {statusMsg.type === 'success' ? <Check size={20} /> : <AlertCircle size={20} />}
           <span className="font-devanagari font-bold">{statusMsg.text}</span>
         </div>
@@ -131,6 +143,7 @@ const AdminPublications: React.FC = () => {
         </div>
       </div>
 
+      {/* Search Bar */}
       <div className="bg-white p-5 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 flex items-center gap-4 shadow-sm group focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
         <Search size={22} className="text-slate-300 group-focus-within:text-blue-500 transition-colors" />
         <input 
@@ -142,7 +155,8 @@ const AdminPublications: React.FC = () => {
         />
       </div>
 
-      <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm">
+      {/* Publications Table */}
+      <div className="bg-white rounded-[2.5rem] md:rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm">
         {loading ? (
           <div className="p-20 text-center flex flex-col items-center gap-4">
             <Loader2 className="animate-spin text-blue-600" size={40} />
@@ -210,14 +224,14 @@ const AdminPublications: React.FC = () => {
         )}
       </div>
 
-      {/* Modern Modal */}
+      {/* Main Form Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[95vh] animate-in zoom-in-95 duration-300">
             {/* Form Section */}
             <div className="flex-1 p-8 md:p-10 space-y-8 overflow-y-auto no-scrollbar">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-black font-devanagari text-slate-800">{editingId ? "प्रकाशन संपादित करें" : "नया प्रकाशन जोड़ें"}</h2>
+                <h2 className="text-2xl font-black font-devanagari text-slate-800">{editingId ? "प्रकाशन विवरण सुधारें" : "नया प्रकाशन जोड़ें"}</h2>
                 <button onClick={() => setIsModalOpen(false)} className="md:hidden text-slate-400"><X size={24} /></button>
               </div>
 
@@ -246,10 +260,10 @@ const AdminPublications: React.FC = () => {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest font-devanagari ml-1">प्रकाशन वर्ष</label>
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest font-devanagari ml-1">प्रकाशन वर्ष/महीना</label>
                     <input 
                       type="text" 
-                      placeholder="2024" 
+                      placeholder="2026" 
                       className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl font-devanagari outline-none" 
                       value={formData.year} 
                       onChange={e => setFormData({...formData, year: e.target.value})} 
@@ -270,13 +284,25 @@ const AdminPublications: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest font-devanagari ml-1">कवर इमेज लिंक (URL)</label>
+                  <div className="flex items-center justify-between ml-1">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest font-devanagari">कवर इमेज लिंक (URL)</label>
+                    <button 
+                      type="button" 
+                      onClick={() => setIsMediaPickerOpen(true)}
+                      className="text-[10px] font-black font-devanagari text-blue-600 hover:text-blue-800 flex items-center gap-1 uppercase tracking-wider"
+                    >
+                      <ImageIcon size={14} /> गैलरी से चुनें
+                    </button>
+                  </div>
                   <input 
                     type="url" 
-                    placeholder="Google Drive लिंक यहाँ पेस्ट करें..." 
+                    placeholder="इमेज लिंक पेस्ट करें या गैलरी से चुनें..." 
                     className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl font-mono text-xs outline-none focus:ring-4 focus:ring-blue-500/10 transition-all" 
                     value={formData.cover_url} 
-                    onChange={e => setFormData({...formData, cover_url: e.target.value})} 
+                    onChange={e => {
+                        setFormData({...formData, cover_url: e.target.value});
+                        setPreviewLoaded(false);
+                    }} 
                   />
                   <p className="text-[10px] text-slate-400 font-devanagari italic ml-1">Google Drive लिंक को हम स्वचालित रूप से इमेज में बदल देंगे।</p>
                 </div>
@@ -298,30 +324,88 @@ const AdminPublications: React.FC = () => {
               
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 relative z-10">लाइव प्रीव्यू</p>
               
-              <div className="relative z-10 w-44 h-60 bg-white rounded-2xl shadow-2xl border-4 border-white overflow-hidden group">
-                <img 
-                  src={convertDriveLink(formData.cover_url) || BOOK_PLACEHOLDER} 
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-500" 
-                  alt="Preview"
-                  onError={(e) => { (e.target as HTMLImageElement).src = BOOK_PLACEHOLDER; }}
-                />
+              <div className="relative z-10 w-44 h-60 bg-white rounded-2xl shadow-2xl border-4 border-white overflow-hidden group flex items-center justify-center bg-slate-100">
+                {!previewLoaded && formData.cover_url && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-slate-50 z-20">
+                        <Loader2 className="animate-spin text-blue-200" size={24} />
+                    </div>
+                )}
+                {formData.cover_url ? (
+                  <img 
+                    src={convertDriveLink(formData.cover_url)} 
+                    className={`w-full h-full object-cover transition-all duration-500 ${previewLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`} 
+                    alt="Preview"
+                    onLoad={() => setPreviewLoaded(true)}
+                    onError={(e) => { 
+                        (e.target as HTMLImageElement).src = BOOK_PLACEHOLDER; 
+                        setPreviewLoaded(true);
+                    }}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-slate-200 gap-2">
+                    <Camera size={32} />
+                    <span className="text-[8px] font-black font-devanagari uppercase tracking-widest">कवर उपलब्ध नहीं</span>
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
               </div>
 
-              <div className="mt-6 text-center space-y-1 relative z-10">
-                <p className="font-bold text-slate-800 font-devanagari text-sm truncate max-w-[200px]">{formData.title || "पत्रिका का नाम"}</p>
-                <p className="text-xs text-blue-600 font-black font-devanagari uppercase tracking-widest">{formData.category} • {formData.year}</p>
+              <div className="mt-6 text-center space-y-1 relative z-10 w-full px-4">
+                <p className="font-bold text-slate-800 font-devanagari text-sm truncate">{formData.title || "पत्रिका का नाम"}</p>
+                <p className="text-[10px] text-blue-600 font-black font-devanagari uppercase tracking-widest">{formData.category}</p>
+                <p className="text-[10px] text-slate-400 font-bold font-devanagari">{formData.year}</p>
               </div>
 
               <button 
                 onClick={() => setIsModalOpen(false)} 
-                className="mt-12 text-slate-400 hover:text-red-500 font-bold font-devanagari transition-colors flex items-center gap-2 relative z-10"
+                className="mt-12 text-slate-400 hover:text-red-500 font-bold font-devanagari transition-colors flex items-center gap-2 relative z-10 text-xs"
               >
-                <X size={18} />
+                <X size={14} />
                 <span>रद्द करें</span>
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Media Picker Modal */}
+      {isMediaPickerOpen && (
+        <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-300">
+           <div className="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                 <h3 className="text-xl font-black font-devanagari text-slate-800 flex items-center gap-3">
+                   <ImageIcon size={22} className="text-blue-600" /> मीडिया गैलरी से चुनें
+                 </h3>
+                 <button onClick={() => setIsMediaPickerOpen(false)} className="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 rounded-full hover:bg-red-50 hover:text-red-500 transition-all"><X size={20} /></button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-6 grid grid-cols-3 sm:grid-cols-4 gap-4 no-scrollbar">
+                {mediaItems.length > 0 ? mediaItems.map((item) => (
+                  <button 
+                    key={item.id}
+                    onClick={() => {
+                      setFormData({...formData, cover_url: item.url});
+                      setPreviewLoaded(false);
+                      setIsMediaPickerOpen(false);
+                    }}
+                    className="group relative aspect-square rounded-xl overflow-hidden border-2 border-slate-100 hover:border-blue-500 transition-all shadow-sm"
+                  >
+                     <img src={item.url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={item.title} />
+                     <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/20 transition-all flex items-center justify-center">
+                        <Check size={24} className="text-white opacity-0 group-hover:opacity-100" />
+                     </div>
+                  </button>
+                )) : (
+                  <div className="col-span-full py-20 text-center text-slate-300 font-devanagari italic">
+                    गैलरी में कोई इमेज नहीं है।
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-4 bg-slate-50 text-center border-t border-slate-100">
+                <p className="text-[10px] text-slate-400 font-devanagari">मीडिया गैलरी में इमेज जोड़ने के लिए 'मीडिया गैलरी' टैब का उपयोग करें।</p>
+              </div>
+           </div>
         </div>
       )}
     </div>

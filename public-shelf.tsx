@@ -2,10 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { Search, BookOpen, Smartphone, Info, Loader2, AlertCircle, X, Filter, Sparkles, ChevronRight, BookMarked, ArrowRight, Phone, Mail, MapPin, Link as LinkIcon, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { supabase } from './lib/supabase.ts';
+import { supabase, convertDriveLink } from './lib/supabase.ts';
 import { Publication, Notice } from './types.ts';
 
-// सुरक्षित प्लेसहोल्डर्स
 const LOGO_FALLBACK = "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=100&auto=format&fit=crop";
 const COVER_FALLBACK = "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=400&auto=format&fit=crop";
 const BG_FALLBACK = "https://images.unsplash.com/photo-1620160640858-6906a2333b25?q=80&w=2070&auto=format&fit=crop";
@@ -49,13 +48,7 @@ const PublicShelf: React.FC = () => {
         setSettings(settingsMap);
         
         const featured: Publication[] = [];
-        const b1 = pubs.find(p => p.id === settingsMap.hero_book_1);
-        const b2 = pubs.find(p => p.id === settingsMap.hero_book_2);
-        
-        if (b1) featured.push(b1);
-        if (b2) featured.push(b2);
-        
-        if (featured.length === 0 && pubs.length > 0) {
+        if (pubs.length > 0) {
            featured.push(pubs[0]);
            if (pubs.length > 1) featured.push(pubs[1]);
         }
@@ -98,7 +91,7 @@ const PublicShelf: React.FC = () => {
       <div className="bg-[#7f1d1d] text-white py-2.5 overflow-hidden border-b border-orange-900/10 relative z-[60] shadow-sm">
         <div className="flex items-center gap-6 animate-marquee whitespace-nowrap">
            <span className="flex items-center gap-2 font-devanagari text-[10px] md:text-xs text-orange-200 font-black uppercase tracking-widest pl-4 shrink-0">
-             <Info size={14} /> महत्वपूर्ण सूचना:
+             <Info size={14} /> सूचना:
            </span>
            {notices.length > 0 ? notices.map(n => (
              <React.Fragment key={n.id}>
@@ -116,18 +109,18 @@ const PublicShelf: React.FC = () => {
         <div className="flex items-center gap-3 md:gap-5 bg-white/90 backdrop-blur-md px-3 md:px-6 py-2 md:py-3 rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl shadow-[#7f1d1d]/5 border border-white/50 ring-1 ring-[#7f1d1d]/5 max-w-[85vw]">
           <div className="w-10 h-10 md:w-16 md:h-16 bg-white rounded-xl md:rounded-3xl flex items-center justify-center shadow-md p-1.5 overflow-hidden shrink-0 border border-orange-100">
              <img 
-              src={settings.logo_url || LOGO_FALLBACK} 
+              src={convertDriveLink(settings.logo_url) || LOGO_FALLBACK} 
               className="w-full h-full object-contain" 
               alt="Logo" 
               onError={(e) => { (e.target as any).src = LOGO_FALLBACK; }}
              />
           </div>
           <div className="text-slate-800 overflow-hidden">
-             <h1 className="text-xs md:text-xl font-black font-devanagari tracking-tight text-[#7f1d1d] truncate">
+             <h1 className="text-xs md:text-xl font-black font-devanagari tracking-tight text-[#7f1d1d] truncate leading-none">
                {settings.headline || "अखिल भारतीय धा. माहेश्वरी सभा"}
              </h1>
-             <p className="text-[8px] md:text-[11px] uppercase tracking-[0.1em] font-bold text-orange-600 font-devanagari mt-0.5 truncate border-t border-orange-100 pt-0.5">
-               {settings.sub_headline || "केन्द्रीय कार्य कारिणी समिति"}
+             <p className="text-[8px] md:text-[11px] uppercase tracking-[0.1em] font-bold text-orange-600 font-devanagari mt-1 truncate border-t border-orange-100 pt-0.5">
+               केन्द्रीय कार्य कारिणी समिति
              </p>
           </div>
         </div>
@@ -144,29 +137,26 @@ const PublicShelf: React.FC = () => {
       <header className="relative min-h-[65vh] md:min-h-[75vh] flex flex-col items-center justify-start overflow-hidden pt-40 md:pt-48 pb-4 md:pb-8">
         <div className="absolute inset-0 z-0">
            <img 
-            src={settings.divine_bg_url || BG_FALLBACK} 
+            src={convertDriveLink(settings.divine_bg_url) || BG_FALLBACK} 
             alt="Divine Background" 
             className="w-full h-full object-cover object-top opacity-50 mix-blend-multiply"
             onError={(e) => { (e.target as any).src = BG_FALLBACK; }}
            />
-           {/* Shade Effect */}
-           <div className="absolute inset-0 bg-gradient-to-b from-[#1a0505]/70 via-[#1a0505]/30 to-[#fffcf5]"></div>
+           <div className="absolute inset-0 bg-gradient-to-b from-[#1a0505]/80 via-[#1a0505]/40 to-[#fffcf5]"></div>
            <div className="absolute inset-0 bg-gradient-to-t from-[#fffcf5] via-transparent to-transparent"></div>
         </div>
 
-        {/* Hero Text - Primary heading at the TOP center */}
         <div className="relative z-10 text-center space-y-4 md:space-y-6 px-6 mb-8 md:mb-12 max-w-5xl mx-auto">
-          <h2 className="text-4xl md:text-6xl lg:text-7xl font-black font-devanagari leading-tight text-white drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] tracking-tight">
+          <h2 className="text-4xl md:text-7xl lg:text-8xl font-black font-devanagari leading-tight text-white drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] tracking-tight">
             समाज की <span className="text-orange-400">ज्ञान संपदा</span>
           </h2>
           
           <div className="flex flex-col items-center gap-3">
-            <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 bg-white/10 border border-white/20 rounded-full text-white text-[10px] md:text-xs font-black font-devanagari uppercase tracking-[0.3em] backdrop-blur-md">
-               <Sparkles size={14} className="text-orange-400" /> ज्ञानम् परमम् ध्येयम्
+            <div className="inline-flex items-center gap-2 px-6 md:px-8 py-3 bg-white/10 border border-white/20 rounded-full text-white text-[10px] md:text-xs font-black font-devanagari uppercase tracking-[0.4em] backdrop-blur-md">
+               <Sparkles size={14} className="text-orange-400" /> गौरवशाली विरासत
             </div>
-            
-            <p className="text-white/90 max-w-xl mx-auto font-devanagari text-[11px] md:text-base leading-relaxed font-bold px-4">
-              हमारी गौरवशाली विरासत और समाज के सभी प्रकाशनों को आधुनिक डिजिटल स्वरूप में अनुभव करें।
+            <p className="text-white/90 max-w-xl mx-auto font-devanagari text-[11px] md:text-lg leading-relaxed font-bold px-4">
+              हमारी संस्कृति और समाज के सभी प्रकाशनों को आधुनिक डिजिटल स्वरूप में अनुभव करें।
             </p>
           </div>
         </div>
@@ -174,18 +164,18 @@ const PublicShelf: React.FC = () => {
         {/* Featured Section */}
         <div className="container mx-auto px-4 md:px-6 relative z-10 mt-2">
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 max-w-4xl mx-auto">
-              {featuredBooks.map((pub, idx) => (
-                <div key={pub.id} className="group relative bg-white/95 backdrop-blur-xl rounded-[1.2rem] md:rounded-[2rem] p-3 md:p-5 border border-white shadow-2xl flex flex-row items-center gap-4 md:gap-5 transition-all hover:translate-y-[-4px]">
-                   <div className="relative shrink-0 w-20 md:w-28 aspect-[3/4.2] rounded-[0.8rem] md:rounded-[1rem] overflow-hidden shadow-xl ring-2 ring-white">
+              {featuredBooks.map((pub) => (
+                <div key={pub.id} className="group relative bg-white/95 backdrop-blur-xl rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-6 border border-white shadow-2xl flex flex-row items-center gap-4 md:gap-6 transition-all hover:translate-y-[-8px]">
+                   <div className="relative shrink-0 w-24 md:w-32 aspect-[3/4.2] rounded-[1rem] md:rounded-[1.2rem] overflow-hidden shadow-2xl ring-4 ring-white">
                       <img 
-                        src={pub.cover_url || COVER_FALLBACK} 
+                        src={convertDriveLink(pub.cover_url) || COVER_FALLBACK} 
                         alt={pub.title}
                         className="w-full h-full object-cover"
                         onError={(e) => { (e.target as any).src = COVER_FALLBACK; }}
                       />
                    </div>
-                   <div className="flex-1 space-y-1.5 md:space-y-2 text-left overflow-hidden">
-                      <h3 className="text-xs md:text-lg font-black text-slate-800 font-devanagari leading-tight line-clamp-1">{pub.title}</h3>
+                   <div className="flex-1 space-y-2 md:space-y-3 text-left overflow-hidden">
+                      <h3 className="text-sm md:text-xl font-black text-slate-800 font-devanagari leading-tight line-clamp-1">{pub.title}</h3>
                       <p className="text-slate-500 font-devanagari text-[9px] md:text-xs leading-relaxed line-clamp-2 italic">
                          {pub.description || "समाज की गतिविधियों से सुसज्जित यह प्रकाशन हमारी एकता का प्रतीक है।"}
                       </p>
@@ -193,9 +183,9 @@ const PublicShelf: React.FC = () => {
                         href={pub.flipbook_url} 
                         target="_blank" 
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 bg-[#7f1d1d] text-white px-3 md:px-5 py-1.5 md:py-2 rounded-lg font-black font-devanagari text-[9px] md:text-[11px] shadow-lg active:scale-95"
+                        className="inline-flex items-center gap-2 bg-[#7f1d1d] text-white px-4 md:px-7 py-2 md:py-3 rounded-xl font-black font-devanagari text-[10px] md:text-[13px] shadow-lg active:scale-95 transition-all hover:bg-red-900"
                       >
-                         पढ़ें <ArrowRight size={10} />
+                         पढ़ें <ArrowRight size={14} />
                       </a>
                    </div>
                 </div>
@@ -206,18 +196,18 @@ const PublicShelf: React.FC = () => {
 
       {/* Grid Area */}
       <main className="container mx-auto px-4 md:px-6 -mt-10 md:-mt-16 pb-20 space-y-6 md:space-y-10 relative z-20">
-         <section className="bg-white/60 backdrop-blur-md p-5 md:p-8 rounded-[2rem] md:rounded-[3rem] border border-white/50 shadow-2xl">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-orange-100 pb-5 md:pb-6 mb-6 md:mb-8">
-               <h4 className="text-base md:text-2xl font-black text-slate-800 font-devanagari flex items-center gap-3">
-                  <div className="w-1 md:w-1.5 h-6 md:h-7 bg-orange-500 rounded-full"></div> डिजिटल लाइब्रेरी सूची
+         <section className="bg-white/70 backdrop-blur-md p-6 md:p-10 rounded-[2.5rem] md:rounded-[4rem] border border-white/50 shadow-2xl">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-orange-100 pb-6 md:pb-8 mb-8 md:mb-12">
+               <h4 className="text-lg md:text-3xl font-black text-slate-800 font-devanagari flex items-center gap-4">
+                  <div className="w-1.5 md:w-2 h-8 md:h-10 bg-orange-500 rounded-full"></div> डिजिटल लाइब्रेरी सूची
                </h4>
                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 w-full md:w-auto">
                   {dynamicCategories.map((cat) => (
                     <button
                       key={cat}
                       onClick={() => setCategory(cat)}
-                      className={`px-3 md:px-5 py-1.5 md:py-2.5 rounded-xl font-devanagari text-[9px] md:text-xs font-bold transition-all border-2 whitespace-nowrap ${
-                        category === cat ? 'bg-orange-500 text-white border-orange-500 shadow-md' : 'text-slate-500 border-white bg-white/80'
+                      className={`px-4 md:px-6 py-2 md:py-3 rounded-2xl font-devanagari text-[10px] md:text-sm font-bold transition-all border-2 whitespace-nowrap ${
+                        category === cat ? 'bg-orange-500 text-white border-orange-500 shadow-xl' : 'text-slate-500 border-white bg-white/80 hover:bg-white'
                       }`}
                     >
                       {cat}
@@ -227,48 +217,132 @@ const PublicShelf: React.FC = () => {
             </div>
 
             {/* Book Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-x-4 gap-y-6 md:gap-y-10">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-x-6 gap-y-10 md:gap-y-16">
                {filteredPubs.map((pub) => (
-                 <a key={pub.id} href={pub.flipbook_url} target="_blank" rel="noreferrer" className="group block">
-                    <div className="relative aspect-[3/4.2] rounded-[1rem] md:rounded-[1.5rem] overflow-hidden shadow-md group-hover:-translate-y-2 transition-all duration-500 border-2 md:border-3 border-white ring-1 ring-slate-100">
+                 <a key={pub.id} href={pub.flipbook_url} target="_blank" rel="noreferrer" className="group block text-center">
+                    <div className="relative aspect-[3/4.2] rounded-[1.2rem] md:rounded-[1.8rem] overflow-hidden shadow-xl group-hover:-translate-y-3 transition-all duration-500 border-4 border-white ring-1 ring-slate-100 mb-4">
                        <img 
-                         src={pub.cover_url || COVER_FALLBACK} 
+                         src={convertDriveLink(pub.cover_url) || COVER_FALLBACK} 
                          alt={pub.title} 
-                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                          onError={(e) => { (e.target as any).src = COVER_FALLBACK; }}
                        />
-                       <div className="absolute inset-0 bg-[#7f1d1d]/80 flex flex-col justify-end p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span className="bg-white text-[#7f1d1d] font-black py-1.5 rounded-lg text-[8px] text-center font-devanagari">खोलें</span>
+                       <div className="absolute inset-0 bg-gradient-to-t from-[#7f1d1d]/90 via-[#7f1d1d]/40 to-transparent flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="bg-white text-[#7f1d1d] font-black py-2 rounded-xl text-[10px] font-devanagari shadow-lg">पढ़ना शुरू करें</span>
                        </div>
                     </div>
-                    <div className="mt-2 text-center">
-                       <h3 className="font-bold text-slate-700 font-devanagari text-[10px] md:text-sm line-clamp-1 leading-tight">{pub.title}</h3>
-                    </div>
+                    <h3 className="font-bold text-slate-700 font-devanagari text-xs md:text-base line-clamp-1 leading-tight group-hover:text-orange-600 transition-colors px-2">{pub.title}</h3>
+                    <p className="text-[9px] md:text-[11px] text-slate-400 font-bold font-devanagari mt-1 uppercase tracking-wider">{pub.year}</p>
                  </a>
                ))}
                
                {filteredPubs.length === 0 && (
-                 <div className="col-span-full py-16 text-center">
-                    <p className="font-devanagari text-slate-400 text-xs md:text-base">कोई पुस्तक उपलब्ध नहीं है।</p>
+                 <div className="col-span-full py-24 text-center">
+                    <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                       <Search size={32} className="text-slate-200" />
+                    </div>
+                    <p className="font-devanagari text-slate-400 text-lg font-bold">कोई पुस्तक नहीं मिली।</p>
                  </div>
                )}
             </div>
          </section>
       </main>
 
-      {/* Footer Section */}
-      <footer className="bg-[#1a0505] text-white pt-12 pb-8 relative overflow-hidden">
-        <div className="container mx-auto px-6 relative z-10 text-center">
-           <div className="flex flex-col items-center gap-4 mb-10">
-              <div className="w-14 h-14 bg-white rounded-xl p-2 shadow-xl">
-                 <img src={settings.logo_url || LOGO_FALLBACK} className="w-full h-full object-contain" alt="Logo" />
+      {/* FOOTER RESTORED AND IMPROVED */}
+      <footer className="bg-[#1a0505] text-white pt-20 pb-10 relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-30"></div>
+        <div className="absolute bottom-0 right-0 w-64 h-64 bg-orange-900/10 rounded-full blur-3xl -mb-32 -mr-32"></div>
+
+        <div className="container mx-auto px-6 relative z-10">
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16 mb-20 text-left">
+              
+              {/* Column 1: About */}
+              <div className="space-y-6">
+                 <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-white rounded-2xl p-2 shadow-2xl ring-4 ring-white/10">
+                       <img src={convertDriveLink(settings.logo_url) || LOGO_FALLBACK} className="w-full h-full object-contain" alt="Logo" />
+                    </div>
+                    <div>
+                       <h5 className="font-black font-devanagari text-lg text-orange-400 leading-tight">अखिल भारतीय धा. माहेश्वरी सभा</h5>
+                    </div>
+                 </div>
+                 <p className="text-white/50 font-devanagari text-xs leading-relaxed font-medium">
+                    हमारी डिजिटल लाइब्रेरी समाज के ज्ञान, संस्कृति और गौरवशाली इतिहास को सुरक्षित रखने और उसे अगली पीढ़ी तक पहुँचाने का एक विनम्र प्रयास है।
+                 </p>
+                 <div className="flex gap-3">
+                    <a href="#" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Facebook size={18} /></a>
+                    <a href="#" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Twitter size={18} /></a>
+                    <a href="#" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Instagram size={18} /></a>
+                    <a href="#" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Youtube size={18} /></a>
+                 </div>
               </div>
-              <div>
-                 <h5 className="font-black font-devanagari text-base text-orange-400">{settings.headline || "अखिल भारतीय धा. माहेश्वरी सभा"}</h5>
-                 <p className="text-[9px] uppercase tracking-widest font-bold text-white/40 font-devanagari">{settings.sub_headline || "केन्द्रीय कार्य कारिणी समिति"}</p>
+
+              {/* Column 2: Quick Links */}
+              <div className="space-y-6">
+                 <h6 className="text-sm font-black font-devanagari uppercase tracking-[0.2em] text-white flex items-center gap-3">
+                    <div className="w-1 h-4 bg-orange-500 rounded-full"></div> महत्वपूर्ण लिंक्स
+                 </h6>
+                 <ul className="space-y-4 font-devanagari text-sm">
+                    {importantLinks.length > 0 ? importantLinks.map((link, i) => (
+                      <li key={i}>
+                        <a href={link.url} target="_blank" rel="noreferrer" className="text-white/40 hover:text-orange-400 flex items-center gap-2 transition-all group">
+                          <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> {link.title}
+                        </a>
+                      </li>
+                    )) : (
+                      <>
+                        <li><a href="#" className="text-white/40 hover:text-orange-400 transition-all">मुख्य पृष्ठ</a></li>
+                        <li><a href="#" className="text-white/40 hover:text-orange-400 transition-all">सभा के बारे में</a></li>
+                        <li><a href="#" className="text-white/40 hover:text-orange-400 transition-all">सदस्यता अभियान</a></li>
+                      </>
+                    )}
+                 </ul>
+              </div>
+
+              {/* Column 3: Contact */}
+              <div className="space-y-6">
+                 <h6 className="text-sm font-black font-devanagari uppercase tracking-[0.2em] text-white flex items-center gap-3">
+                    <div className="w-1 h-4 bg-orange-500 rounded-full"></div> संपर्क करें
+                 </h6>
+                 <div className="space-y-5 font-devanagari text-xs">
+                    <div className="flex items-start gap-4 text-white/50">
+                       <MapPin className="text-orange-500 shrink-0" size={18} />
+                       <span className="leading-relaxed font-medium">अखिल भारतीय धा. माहेश्वरी सभा, केन्द्रीय कार्यालय, राजस्थान</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-white/50 hover:text-white transition-colors">
+                       <Phone className="text-orange-500 shrink-0" size={18} />
+                       <span className="font-bold">+91 0000-000000</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-white/50 hover:text-white transition-colors">
+                       <Mail className="text-orange-500 shrink-0" size={18} />
+                       <span className="font-bold">info@maheshwarisabha.com</span>
+                    </div>
+                 </div>
+              </div>
+
+              {/* Column 4: Newsletter/Support */}
+              <div className="space-y-6 bg-white/5 p-8 rounded-[2rem] border border-white/5 backdrop-blur-sm">
+                 <h6 className="text-sm font-black font-devanagari uppercase tracking-[0.2em] text-white">डिजिटल सहायता</h6>
+                 <p className="text-[10px] font-devanagari text-white/40 leading-relaxed font-bold">
+                    वेबसाइट या पब्लिकेशन से संबंधित किसी भी समस्या के लिए हमें संदेश भेजें।
+                 </p>
+                 <a href="https://wa.me/910000000000" className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-black font-devanagari py-3 rounded-xl text-xs shadow-xl transition-all">
+                    व्हाट्सएप पर जुड़ें
+                 </a>
               </div>
            </div>
-           <p className="text-white/30 font-devanagari text-[10px] mb-8">{settings.footer_copyright || "© 2026 अखिल भारतीय धा. माहेश्वरी सभा."}</p>
+
+           {/* Bottom Bar */}
+           <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+              <p className="text-white/30 font-devanagari text-[10px] font-bold">
+                 {settings.footer_copyright || "© 2026 अखिल भारतीय धा. माहेश्वरी सभा. सर्वाधिकार सुरक्षित।"}
+              </p>
+              <div className="flex items-center gap-6 text-[10px] font-black font-devanagari uppercase tracking-widest text-white/20">
+                 <a href="#" className="hover:text-white transition-colors">गोपनीयता नीति</a>
+                 <a href="#" className="hover:text-white transition-colors">नियम और शर्तें</a>
+              </div>
+           </div>
         </div>
       </footer>
     </div>
