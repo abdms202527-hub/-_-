@@ -21,12 +21,25 @@ const PublicShelf: React.FC = () => {
   const [dynamicCategories, setDynamicCategories] = useState<string[]>(['सभी']);
   const [featuredBooks, setFeaturedBooks] = useState<Publication[]>([]);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
     // Check if on mobile to show install suggestion
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    // Catch the PWA install prompt event
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      setDeferredPrompt(e);
+      // Show the banner because installation is possible
+      setShowInstallBanner(true);
+    });
+
     if (isMobile) {
       const bannerHidden = localStorage.getItem('hideInstallBanner');
+      // If prompt isn't supported/fired yet, we still show the banner if not hidden
       if (!bannerHidden) setShowInstallBanner(true);
     }
 
@@ -90,13 +103,34 @@ const PublicShelf: React.FC = () => {
     fetchData();
   }, []);
 
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      // Show the system install prompt
+      deferredPrompt.prompt();
+      // Wait for the user to respond to the prompt
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response to the install prompt: ${outcome}`);
+      // We've used the prompt, and can't use it again, throw it away
+      setDeferredPrompt(null);
+      setShowInstallBanner(false);
+    } else {
+      // Fallback for iOS or if event hasn't fired
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      if (isIOS) {
+        alert("आईफोन पर इंस्टॉल करने के लिए:\n1. नीचे 'Share' बटन दबाएं\n2. 'Add to Home Screen' चुनें।");
+      } else {
+        alert("यह ऐप आपके फोन के लिए तैयार है। अगर सिस्टम प्रॉम्प्ट नहीं दिख रहा है, तो ब्राउज़र के 'Install App' विकल्प का उपयोग करें।");
+      }
+    }
+  };
+
   const filteredPubs = (category === 'सभी' ? publications : publications.filter(p => p.category === category))
     .filter(p => (p.title || '').toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="min-h-screen bg-[#fffcf5] selection:bg-orange-200 overflow-x-hidden pb-16 md:pb-0">
       
-      {/* MOBILE INSTALL BANNER - FOR 15,000 USERS STRATEGY */}
+      {/* SMART INSTALL BANNER */}
       {showInstallBanner && (
         <div className="fixed bottom-0 left-0 right-0 z-[100] p-4 animate-in slide-in-from-bottom duration-500 lg:hidden">
            <div className="bg-slate-900 text-white p-4 rounded-3xl shadow-2xl flex items-center justify-between border border-white/10 backdrop-blur-xl">
@@ -111,12 +145,10 @@ const PublicShelf: React.FC = () => {
               </div>
               <div className="flex items-center gap-2">
                  <button 
-                  onClick={() => {
-                    alert("ऐप को इंस्टॉल करने के लिए अपने ब्राउज़र के 'Share' बटन पर क्लिक करें और 'Add to Home Screen' चुनें।");
-                  }}
+                  onClick={handleInstallClick}
                   className="bg-orange-500 text-white px-4 py-2 rounded-xl text-xs font-black font-devanagari shadow-lg active:scale-95"
                  >
-                    इंस्टॉल करें
+                    {deferredPrompt ? 'अभी इंस्टॉल करें' : 'कैसे करें?'}
                  </button>
                  <button onClick={() => { setShowInstallBanner(false); localStorage.setItem('hideInstallBanner', 'true'); }} className="p-2 text-slate-500">
                     <X size={18} />
@@ -392,24 +424,10 @@ const PublicShelf: React.FC = () => {
               </div>
            </div>
 
-           <div className="mb-10 p-4 md:p-6 bg-white/5 rounded-2xl border border-white/10 text-center shadow-sm group hover:border-orange-500/30 transition-all duration-300">
-              <p className="text-white font-devanagari text-sm md:text-base font-bold flex flex-row items-center justify-center gap-2 md:gap-3">
-                 <Code2 size={18} className="text-orange-500 group-hover:rotate-12 transition-transform" />
-                 <span className="text-slate-400">एप्लीकेशन डेवलपर :-</span>
-                 <span className="text-white hover:text-orange-400 transition-colors">
-                   पीयूष कुमार जगदीश चन्द्र भंसाली
-                 </span>
-              </p>
-           </div>
-
-           <div className="pt-10 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-6">
-              <p className="text-white/50 font-devanagari text-sm md:text-base font-bold">
+           <div className="pt-10 border-t border-white/10 flex flex-col md:flex-row items-center justify-center gap-6">
+              <p className="text-white/50 font-devanagari text-sm md:text-base font-bold text-center">
                  {settings.footer_copyright || "© 2026 अखिल भारतीय धा. माहेश्वरी सभा. सर्वाधिकार सुरक्षित।"}
               </p>
-              <div className="flex items-center gap-8 text-xs md:text-sm font-black font-devanagari uppercase tracking-[0.2em] text-white/40">
-                 <a href="#" className="hover:text-white transition-colors">गोपनीयता नीति</a>
-                 <a href="#" className="hover:text-white transition-colors">नियम और शर्तें</a>
-              </div>
            </div>
         </div>
       </footer>

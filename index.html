@@ -7,6 +7,8 @@
     <title>Digital Library & Magazine Management</title>
     
     <!-- PWA & Mobile Optimization Tags -->
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22माहेश्वरी%20लाइब्रेरी%22,%22short_name%22:%22लाइब्रेरी%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22#fffcf5%22,%22theme_color%22:%22#7f1d1d%22,%22icons%22:[{%22src%22:%22https://kwkzyoppaxgvxeufgpqc.supabase.co/storage/v1/object/public/media/logo-placeholder.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22,%22purpose%22:%22any%20maskable%22}]} border-radius: 20px;">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="माहेश्वरी लाइब्रेरी">
@@ -56,6 +58,17 @@
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.39.0"
   }
 }
+</script>
+<script>
+  // Register a dummy service worker to enable PWA installation
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      const swCode = "self.addEventListener('fetch', function(event) {});";
+      const blob = new Blob([swCode], {type: 'text/javascript'});
+      const url = URL.createObjectURL(blob);
+      navigator.serviceWorker.register(url);
+    });
+  }
 </script>
 <link rel="stylesheet" href="/index.css">
 </head>
