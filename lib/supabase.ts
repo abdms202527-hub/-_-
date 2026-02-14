@@ -1,13 +1,17 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Vercel handles process.env during build. 
-// For browser environments, these are typically replaced by the bundler.
+// Access variables from process.env (Vercel injects these at build time for many setups)
+// Fallback to empty string to prevent constructor crash
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("CRITICAL: Supabase URL or Key is missing. Check Vercel Environment Variables.");
+  console.error("Supabase configuration is missing. Please ensure SUPABASE_URL and SUPABASE_ANON_KEY are set in Vercel settings.");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create client with fallback handling
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co', 
+  supabaseAnonKey || 'placeholder'
+);

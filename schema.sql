@@ -1,8 +1,8 @@
 
--- Enable UUID extension
+-- 1. UUID Extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Publications Table
+-- 2. PUBLICATIONS TABLE
 CREATE TABLE IF NOT EXISTS publications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS publications (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- Notices Table
+-- 3. NOTICES TABLE
 CREATE TABLE IF NOT EXISTS notices (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   content TEXT NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS notices (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- Site Settings Table
+-- 4. SITE SETTINGS TABLE
 CREATE TABLE IF NOT EXISTS site_settings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   key TEXT UNIQUE NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- Analytics Table
+-- 5. ANALYTICS TABLE
 CREATE TABLE IF NOT EXISTS analytics (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   visitor_id TEXT,
@@ -43,21 +43,29 @@ CREATE TABLE IF NOT EXISTS analytics (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- Enable RLS
+-- 6. SECURITY (RLS) - Idempotent
 ALTER TABLE publications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE analytics ENABLE ROW LEVEL SECURITY;
 
--- Recreate Policies to ensure public access
-DROP POLICY IF EXISTS "Public read publications" ON publications;
-CREATE POLICY "Public read publications" ON publications FOR SELECT USING (true);
+-- DROP AND RECREATE POLICIES TO ENSURE THEY WORK
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Public read publications" ON publications;
+    CREATE POLICY "Public read publications" ON publications FOR SELECT USING (true);
+    
+    DROP POLICY IF EXISTS "Public read notices" ON notices;
+    CREATE POLICY "Public read notices" ON notices FOR SELECT USING (true);
+    
+    DROP POLICY IF EXISTS "Public read settings" ON site_settings;
+    CREATE POLICY "Public read settings" ON site_settings FOR SELECT USING (true);
+    
+    DROP POLICY IF EXISTS "Public insert analytics" ON analytics;
+    CREATE POLICY "Public insert analytics" ON analytics FOR INSERT WITH CHECK (true);
+END $$;
 
-DROP POLICY IF EXISTS "Public read notices" ON notices;
-CREATE POLICY "Public read notices" ON notices FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Public read settings" ON site_settings;
-CREATE POLICY "Public read settings" ON site_settings FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Public insert analytics" ON analytics;
-CREATE POLICY "Public insert analytics" ON analytics FOR INSERT WITH CHECK (true);
+-- 7. INITIAL DATA (Optional - Add your first entry)
+INSERT INTO site_settings (key, value) 
+VALUES ('headline', 'समाज की डिजिटल लाइब्रेरी')
+ON CONFLICT (key) DO NOTHING;

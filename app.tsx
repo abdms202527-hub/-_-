@@ -1,29 +1,31 @@
 
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { supabase } from './lib/supabase';
-import PublicShelf from './public-shelf';
-import AdminLayout from './admin-layout';
-import AdminDashboard from './admin-dashboard';
-import AdminPublications from './admin-publications';
-import AdminMedia from './admin-media';
-import AdminNotices from './admin-notices';
-import AdminSettings from './admin-settings';
+import { supabase } from './lib/supabase.ts';
+import PublicShelf from './public-shelf.tsx';
+import AdminLayout from './admin-layout.tsx';
+import AdminDashboard from './admin-dashboard.tsx';
+import AdminPublications from './admin-publications.tsx';
+import AdminMedia from './admin-media.tsx';
+import AdminNotices from './admin-notices.tsx';
+import AdminSettings from './admin-settings.tsx';
 
 const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(true);
 
   useEffect(() => {
-    // Analytics: Log visitor
     const logVisit = async () => {
       try {
-        await supabase.from('analytics').insert({
-          device: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
-          platform: navigator.userAgent.split(' ')[0],
-          path: window.location.hash || '/'
-        });
+        // Only attempt to log if supabase is properly configured
+        if (supabase) {
+          await supabase.from('analytics').insert({
+            device: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
+            platform: navigator.userAgent.split(' ')[0],
+            path: window.location.hash || '/'
+          });
+        }
       } catch (err) {
-        console.error("Failed to log visit", err);
+        console.warn("Analytics logging skipped or failed:", err);
       }
     };
     logVisit();
