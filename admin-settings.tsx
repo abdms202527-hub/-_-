@@ -1,23 +1,29 @@
 
 import React, { useState, useEffect } from 'react';
-import { Save, Smartphone, Palette, Globe, Phone, Image as ImageIcon, Settings, Loader2, Tag, Plus, X, Type } from 'lucide-react';
+import { Save, Smartphone, Palette, Globe, Phone, Image as ImageIcon, Settings, Loader2, Tag, Plus, X, Type, Star } from 'lucide-react';
 import { supabase } from './lib/supabase.ts';
+
+const LOGO_PLACEHOLDER = "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=100&auto=format&fit=crop";
 
 const AdminSettings: React.FC = () => {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [categories, setCategories] = useState<string[]>([]);
+  const [publications, setPublications] = useState<any[]>([]);
   const [newCat, setNewCat] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const fetchSettings = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase.from('site_settings').select('*');
-        if (error) throw error;
-        if (data) {
-          const map = data.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {});
+        const [settingsRes, pubsRes] = await Promise.all([
+          supabase.from('site_settings').select('*'),
+          supabase.from('publications').select('id, title').order('title')
+        ]);
+
+        if (settingsRes.data) {
+          const map = settingsRes.data.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {});
           setSettings(map);
           
           if (map.publication_categories) {
@@ -26,13 +32,15 @@ const AdminSettings: React.FC = () => {
             setCategories(['पत्रिका', 'विशेषांक', 'स्मृति लेख', 'कार्यकारिणी']);
           }
         }
+        
+        if (pubsRes.data) setPublications(pubsRes.data);
       } catch (err) {
-        console.error("Fetch Settings Error:", err);
+        console.error("Fetch Data Error:", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchSettings();
+    fetchData();
   }, []);
 
   const handleChange = (key: string, value: string) => {
@@ -72,7 +80,7 @@ const AdminSettings: React.FC = () => {
       const { error } = await supabase.from('site_settings').upsert(updates, { onConflict: 'key' });
       if (error) throw error;
       
-      alert("सेटिंग्स और श्रेणियां सफलतापूर्वक सुरक्षित कर दी गई हैं!");
+      alert("सेटिंग्स सफलतापूर्वक सुरक्षित कर दी गई हैं!");
     } catch (err: any) {
       console.error("Save Settings Error:", err);
       alert("Error: " + err.message);
@@ -109,72 +117,78 @@ const AdminSettings: React.FC = () => {
         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 space-y-6">
           <div className="flex items-center gap-3">
              <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center"><Palette size={20} /></div>
-             <h3 className="text-lg font-bold text-slate-800 font-devanagari">लोगो और ब्रांडिंग</h3>
+             <h3 className="text-lg font-bold text-slate-800 font-devanagari">ब्रैंडिंग और लोगो</h3>
           </div>
-          <div className="space-y-4">
-            <SettingsField label="मुख्य लोगो URL" value={settings.logo_url || ''} onChange={(v) => handleChange('logo_url', v)} icon={<ImageIcon size={18} />} />
-            <SettingsField label="वेबसाइट हेडलाइन (Line 1)" value={settings.headline || 'अखिल भारतीय धा. माहेश्वरी सभा'} onChange={(v) => handleChange('headline', v)} icon={<Type size={18} />} />
-            <SettingsField label="सब-हेडलाइन (Line 2)" value={settings.sub_headline || 'केन्द्रीय कार्य कारिणी समिति'} onChange={(v) => handleChange('sub_headline', v)} icon={<Type size={18} />} />
+          <div className="space-y-6">
+            <div className="flex items-start gap-6">
+               <div className="w-24 h-24 bg-slate-50 border-2 border-slate-100 rounded-2xl flex items-center justify-center overflow-hidden shrink-0">
+                  <img 
+                    src={settings.logo_url || LOGO_PLACEHOLDER} 
+                    alt="Logo Preview" 
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.onerror = null;
+                      target.src = LOGO_PLACEHOLDER;
+                    }}
+                  />
+               </div>
+               <div className="flex-1">
+                  <SettingsField label="मुख्य लोगो URL" value={settings.logo_url || ''} onChange={(v) => handleChange('logo_url', v)} icon={<ImageIcon size={18} />} />
+                  <p className="text-[10px] text-slate-400 mt-2 font-devanagari">वेबसाइट का मुख्य लोगो यहाँ से बदलें।</p>
+               </div>
+            </div>
+            <SettingsField label="वेबसाइट हेडलाइन (Line 1)" value={settings.headline || ''} onChange={(v) => handleChange('headline', v)} icon={<Type size={18} />} />
+            <SettingsField label="सब-हेडलाइन (Line 2)" value={settings.sub_headline || ''} onChange={(v) => handleChange('sub_headline', v)} icon={<Type size={18} />} />
           </div>
         </div>
 
-        {/* Categories Section - Dynamic Management */}
+        {/* Categories Section */}
         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 space-y-6">
           <div className="flex items-center gap-3">
              <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center"><Tag size={20} /></div>
-             <h3 className="text-lg font-bold text-slate-800 font-devanagari">प्रकाशन श्रेणियां (Filter Bar)</h3>
+             <h3 className="text-lg font-bold text-slate-800 font-devanagari">प्रकाशन श्रेणियां</h3>
           </div>
-          
           <div className="space-y-4">
              <div className="flex flex-wrap gap-2 min-h-[50px] p-4 bg-slate-50 rounded-2xl border border-slate-100">
                 {categories.map((cat) => (
-                  <div key={cat} className="bg-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm border border-slate-100 group">
+                  <div key={cat} className="bg-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm border border-slate-100">
                      <span className="font-devanagari text-sm font-bold text-slate-700">{cat}</span>
-                     <button onClick={() => removeCategory(cat)} className="text-slate-300 hover:text-red-500 transition-colors">
-                       <X size={14} />
-                     </button>
+                     <button onClick={() => removeCategory(cat)} className="text-slate-300 hover:text-red-500"><X size={14} /></button>
                   </div>
                 ))}
-                {categories.length === 0 && <p className="text-slate-400 font-devanagari text-xs italic p-1">कोई श्रेणी नहीं है, कृपया जोड़ें...</p>}
              </div>
-             
              <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  placeholder="नई श्रेणी का नाम (जैसे: स्मारिका)"
-                  className="flex-1 bg-white border border-slate-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 font-devanagari"
-                  value={newCat}
-                  onChange={(e) => setNewCat(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addCategory()}
-                />
-                <button 
-                  onClick={addCategory}
-                  className="bg-slate-900 text-white px-6 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-colors"
-                >
-                  <Plus size={18} /> जोड़ें
-                </button>
+                <input type="text" placeholder="नई श्रेणी..." className="flex-1 bg-white border border-slate-100 rounded-xl px-4 py-3 font-devanagari" value={newCat} onChange={(e) => setNewCat(e.target.value)} />
+                <button onClick={addCategory} className="bg-slate-900 text-white px-6 rounded-xl font-bold"><Plus size={18} /></button>
              </div>
           </div>
         </div>
 
-        {/* Hero Content */}
+        {/* Featured Content Management */}
         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 space-y-6">
-           <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center"><Globe size={20} /></div>
-             <h3 className="text-lg font-bold text-slate-800 font-devanagari">होम पेज कंटेंट</h3>
-           </div>
-           <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-devanagari text-slate-400 mb-1.5 ml-1">मुख्य विवरण (Hero Description)</label>
-                <textarea 
-                  rows={4}
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-devanagari resize-none"
-                  value={settings.hero_description || ''}
-                  onChange={(e) => handleChange('hero_description', e.target.value)}
-                />
-              </div>
-              <SettingsField label="'हमारे बारे में' संक्षिप्त" value={settings.footer_about || ''} onChange={(v) => handleChange('footer_about', v)} />
-           </div>
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-yellow-50 text-yellow-600 rounded-xl flex items-center justify-center"><Star size={20} /></div>
+             <h3 className="text-lg font-bold text-slate-800 font-devanagari">होम पेज पर हाईलाइट</h3>
+          </div>
+          <div className="space-y-6">
+             <select 
+                className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 font-devanagari"
+                value={settings.hero_book_1 || ''}
+                onChange={(e) => handleChange('hero_book_1', e.target.value)}
+              >
+                <option value="">प्रमुख पुस्तक #1 चुनें</option>
+                {publications.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+             </select>
+             <select 
+                className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 font-devanagari"
+                value={settings.hero_book_2 || ''}
+                onChange={(e) => handleChange('hero_book_2', e.target.value)}
+              >
+                <option value="">प्रमुख पुस्तक #2 चुनें</option>
+                {publications.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+             </select>
+          </div>
         </div>
 
         {/* Contact/Footer */}
@@ -184,7 +198,7 @@ const AdminSettings: React.FC = () => {
              <h3 className="text-lg font-bold text-slate-800 font-devanagari">संपर्क और फुटर</h3>
            </div>
            <div className="space-y-4">
-             <SettingsField label="संपर्क जानकारी (Footer)" value={settings.contact_info || ''} onChange={(v) => handleChange('contact_info', v)} />
+             <SettingsField label="संपर्क जानकारी" value={settings.contact_info || ''} onChange={(v) => handleChange('contact_info', v)} />
              <SettingsField label="कॉपीराइट टेक्स्ट" value={settings.footer_copyright || ''} onChange={(v) => handleChange('footer_copyright', v)} />
            </div>
         </div>
@@ -194,7 +208,7 @@ const AdminSettings: React.FC = () => {
 };
 
 const SettingsField = ({ label, value, onChange, icon }: { label: string, value: string, onChange: (v: string) => void, icon?: React.ReactNode }) => (
-  <div>
+  <div className="flex-1">
     <label className="block text-xs font-devanagari text-slate-400 mb-1.5 ml-1">{label}</label>
     <div className="relative">
       <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-devanagari pr-10" />

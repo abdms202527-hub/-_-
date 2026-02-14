@@ -1,8 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Trash2, ExternalLink, Loader2, AlertCircle, BookOpen } from 'lucide-react';
+import { Plus, Search, Trash2, ExternalLink, Loader2, AlertCircle, BookOpen, X, Image as ImageIcon, Check, Calendar, Tag, Link as LinkIcon, Type, Sparkles } from 'lucide-react';
 import { supabase } from './lib/supabase.ts';
 import { Publication } from './types.ts';
+
+// सुरक्षित प्लेसहोल्डर इमेज
+const BOOK_PLACEHOLDER = "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=200&auto=format&fit=crop";
 
 const AdminPublications: React.FC = () => {
   const [search, setSearch] = useState('');
@@ -10,6 +13,18 @@ const AdminPublications: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>(['पत्रिका', 'विशेषांक']);
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    category: '',
+    year: new Date().getFullYear().toString(),
+    flipbook_url: '',
+    cover_url: '',
+    description: '',
+    is_latest: true
+  });
 
   const fetchPubs = async () => {
     try {
@@ -24,7 +39,11 @@ const AdminPublications: React.FC = () => {
       setPublications(pubRes.data || []);
       
       if (settingsRes.data && settingsRes.data.value) {
-        setCategories(JSON.parse(settingsRes.data.value));
+        const parsedCats = JSON.parse(settingsRes.data.value);
+        setCategories(parsedCats);
+        setFormData(prev => ({ ...prev, category: parsedCats[0] || 'पत्रिका' }));
+      } else {
+        setFormData(prev => ({ ...prev, category: 'पत्रिका' }));
       }
     } catch (err: any) {
       console.error("Fetch Error:", err);
@@ -49,40 +68,45 @@ const AdminPublications: React.FC = () => {
     }
   };
 
-  const handleAdd = async () => {
-    const title = prompt("पत्रिका का शीर्षक:");
-    if (!title) return;
-    
-    // Dynamic category choice
-    const catChoice = prompt(`श्रेणी चुनें या नई टाइप करें:\n(${categories.join(', ')})`, categories[0] || 'पत्रिका');
-    if (!catChoice) return;
-
-    const url = prompt("Flipbook URL (e.g., https://online.anyflip.com/...):");
-    if (!url) return;
-    const cover = prompt("कवर इमेज URL (वैकल्पिक):");
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.title || !formData.flipbook_url) {
+      alert("कृपया शीर्षक और लिंक URL अवश्य भरें।");
+      return;
+    }
 
     try {
-      const { error } = await supabase.from('publications').insert({
-        title,
-        flipbook_url: url,
-        cover_url: cover || '',
-        category: catChoice,
-        year: new Date().getFullYear().toString(),
-        is_latest: true
-      });
+      setSaving(true);
+      const { error } = await supabase.from('publications').insert([formData]);
 
       if (error) throw error;
+      
+      setIsModalOpen(false);
+      setFormData({
+        title: '',
+        category: categories[0] || 'पत्रिका',
+        year: new Date().getFullYear().toString(),
+        flipbook_url: '',
+        cover_url: '',
+        description: '',
+        is_latest: true
+      });
       fetchPubs();
     } catch (err: any) {
       console.error("Save Error:", err);
       alert("डेटा सेव करने में त्रुटि: " + err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const filtered = publications.filter(p => (p.title || '').toLowerCase().includes(search.toLowerCase()));
+  const filtered = publications.filter(p => 
+    (p.title || '').toLowerCase().includes(search.toLowerCase()) || 
+    (p.year || '').toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div className="space-y-8 animate-fade-in pb-10">
+    <div className="space-y-8 animate-fade-in pb-10 relative">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <span className="text-blue-600 text-sm font-devanagari flex items-center gap-2 mb-1">
@@ -91,7 +115,7 @@ const AdminPublications: React.FC = () => {
           <h1 className="text-4xl font-black text-slate-800 font-devanagari tracking-tight">प्रकाशन प्रबंधन</h1>
         </div>
         <button 
-          onClick={handleAdd}
+          onClick={() => setIsModalOpen(true)}
           className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-[1.5rem] font-bold font-devanagari flex items-center gap-2 shadow-xl shadow-blue-200 transition-all active:scale-95 group"
         >
           <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center group-hover:rotate-90 transition-transform">
@@ -108,6 +132,7 @@ const AdminPublications: React.FC = () => {
         </div>
       )}
 
+      {/* Search Bar */}
       <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-4 group">
         <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-focus-within:bg-blue-50 group-focus-within:text-blue-600 transition-all">
           <Search size={22} />
@@ -121,6 +146,7 @@ const AdminPublications: React.FC = () => {
         />
       </div>
 
+      {/* Publications Table */}
       <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden min-h-[400px]">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-80 gap-6">
@@ -135,8 +161,9 @@ const AdminPublications: React.FC = () => {
             <thead className="bg-slate-50/50 text-slate-400 font-devanagari text-[10px] uppercase tracking-[0.2em] font-black border-b border-slate-100">
               <tr>
                 <th className="px-8 py-6">कवर इमेज</th>
-                <th className="px-8 py-6">पत्रिका जानकारी</th>
-                <th className="px-8 py-6 text-center">एक्सेस लिंक</th>
+                <th className="px-8 py-6">विवरण</th>
+                <th className="px-8 py-6">श्रेणी व वर्ष</th>
+                <th className="px-8 py-6 text-center">लिंक</th>
                 <th className="px-8 py-6 text-right">एक्शन</th>
               </tr>
             </thead>
@@ -144,61 +171,187 @@ const AdminPublications: React.FC = () => {
               {filtered.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50/50 transition-all group">
                   <td className="px-8 py-6">
-                    <div className="w-14 h-20 rounded-xl overflow-hidden shadow-md border-2 border-white group-hover:scale-105 transition-transform duration-500">
+                    <div className="w-16 h-24 rounded-xl overflow-hidden shadow-lg border-2 border-slate-100 group-hover:scale-105 transition-transform duration-500 bg-slate-50 flex items-center justify-center">
                       <img 
-                        src={p.cover_url || 'https://via.placeholder.com/100x140?text=No+Cover'} 
+                        src={p.cover_url || BOOK_PLACEHOLDER} 
                         alt="cover" 
                         className="w-full h-full object-cover" 
+                        onError={(e) => { 
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null; 
+                          target.src = BOOK_PLACEHOLDER; 
+                        }}
                       />
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-slate-800 font-devanagari text-lg">{p.title}</span>
-                      {p.is_latest && (
-                        <span className="bg-green-100 text-green-600 text-[10px] px-2 py-1 rounded-lg font-black font-devanagari uppercase tracking-widest">नवीनतम</span>
-                      )}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-800 font-devanagari text-lg">{p.title}</span>
+                        {p.is_latest && (
+                          <span className="bg-green-100 text-green-600 text-[9px] px-2 py-0.5 rounded-lg font-black font-devanagari uppercase tracking-widest">नवीनतम</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-400 font-devanagari line-clamp-1">{p.description || "कोई विवरण नहीं..."}</p>
                     </div>
-                    <p className="text-sm text-slate-400 font-devanagari mt-1">{p.category} • {p.year}</p>
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-slate-700 font-bold font-devanagari text-sm bg-slate-100 px-3 py-1 rounded-full w-fit">{p.category}</span>
+                      <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest pl-1">{p.year}</span>
+                    </div>
                   </td>
                   <td className="px-8 py-6 text-center">
                      <a 
                       href={p.flipbook_url} 
                       target="_blank" 
                       rel="noreferrer" 
-                      className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-bold font-devanagari text-sm transition-all bg-blue-50 px-4 py-2 rounded-xl border border-blue-100"
+                      className="inline-flex items-center gap-2 text-blue-600 hover:text-white hover:bg-blue-600 font-bold font-devanagari text-xs transition-all bg-blue-50 px-5 py-3 rounded-2xl border border-blue-100 shadow-sm"
                      >
-                       <ExternalLink size={16} /> लिंक खोलें
+                       <ExternalLink size={14} /> खोलें
                      </a>
                   </td>
                   <td className="px-8 py-6 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all" 
-                        onClick={() => handleDelete(p.id)}
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
+                    <button 
+                      className="p-3 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all" 
+                      onClick={() => handleDelete(p.id)}
+                    >
+                      <Trash2 size={20} />
+                    </button>
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="px-8 py-20 text-center">
-                    <div className="flex flex-col items-center justify-center gap-4 text-slate-300">
-                      <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center">
-                        <Search size={32} />
-                      </div>
-                      <p className="font-devanagari text-xl">कोई डेटा नहीं मिला।</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         )}
       </div>
+
+      {/* Add Publication Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-slate-900/40 animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-4xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-300">
+            {/* Left Column: Form */}
+            <div className="flex-1 p-10 md:p-14 space-y-8 overflow-y-auto max-h-[90vh]">
+              <div className="flex items-center justify-between">
+                <div>
+                   <h2 className="text-3xl font-black text-slate-800 font-devanagari tracking-tight">नया प्रकाशन जोड़ें</h2>
+                </div>
+                <button onClick={() => setIsModalOpen(false)} className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors">
+                  <X size={24} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSave} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="col-span-full">
+                    <label className="block text-xs font-devanagari text-slate-400 mb-2 ml-1">पत्रिका का नाम (शीर्षक)</label>
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        required
+                        placeholder="शीर्षक दर्ज करें"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-4 focus:ring-blue-500/10 font-devanagari transition-all"
+                        value={formData.title}
+                        onChange={(e) => setFormData({...formData, title: e.target.value})}
+                      />
+                      <Type className="absolute left-4 top-4 text-slate-300" size={18} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-devanagari text-slate-400 mb-2 ml-1">श्रेणी चुनें</label>
+                    <div className="relative">
+                      <select 
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-4 focus:ring-blue-500/10 font-devanagari transition-all appearance-none"
+                        value={formData.category}
+                        onChange={(e) => setFormData({...formData, category: e.target.value})}
+                      >
+                        {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                      </select>
+                      <Tag className="absolute left-4 top-4 text-slate-300" size={18} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-devanagari text-slate-400 mb-2 ml-1">प्रकाशन वर्ष</label>
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        placeholder="2026"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-4 focus:ring-blue-500/10 font-devanagari transition-all"
+                        value={formData.year}
+                        onChange={(e) => setFormData({...formData, year: e.target.value})}
+                      />
+                      <Calendar className="absolute left-4 top-4 text-slate-300" size={18} />
+                    </div>
+                  </div>
+
+                  <div className="col-span-full">
+                    <label className="block text-xs font-devanagari text-slate-400 mb-2 ml-1">Flipbook लिंक (URL)</label>
+                    <div className="relative">
+                      <input 
+                        type="url" 
+                        required
+                        placeholder="https://..."
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-4 focus:ring-blue-500/10 font-mono text-xs transition-all"
+                        value={formData.flipbook_url}
+                        onChange={(e) => setFormData({...formData, flipbook_url: e.target.value})}
+                      />
+                      <LinkIcon className="absolute left-4 top-4 text-slate-300" size={18} />
+                    </div>
+                  </div>
+
+                  <div className="col-span-full">
+                    <label className="block text-xs font-devanagari text-slate-400 mb-2 ml-1">कवर इमेज लिंक (URL)</label>
+                    <div className="relative">
+                      <input 
+                        type="url" 
+                        placeholder="https://..."
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-4 focus:ring-blue-500/10 font-mono text-xs transition-all"
+                        value={formData.cover_url}
+                        onChange={(e) => setFormData({...formData, cover_url: e.target.value})}
+                      />
+                      <ImageIcon className="absolute left-4 top-4 text-slate-300" size={18} />
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  type="submit"
+                  disabled={saving}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-[1.5rem] font-bold font-devanagari text-xl shadow-2xl shadow-blue-200 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {saving ? <Loader2 className="animate-spin" size={24} /> : <Check size={24} />}
+                  <span>प्रकाशन सुरक्षित करें</span>
+                </button>
+              </form>
+            </div>
+
+            {/* Right Column: Preview Side */}
+            <div className="w-full md:w-80 bg-slate-50 p-10 flex flex-col items-center justify-center border-l border-slate-100">
+               <div className="text-center space-y-6">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">लाइव प्रीव्यू</span>
+                  <div className="w-48 aspect-[3/4.2] rounded-[2rem] bg-white shadow-2xl overflow-hidden border-8 border-white flex items-center justify-center ring-1 ring-slate-200">
+                    <img 
+                      src={formData.cover_url || BOOK_PLACEHOLDER} 
+                      className="w-full h-full object-cover" 
+                      alt="Preview" 
+                      onError={(e) => { 
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = BOOK_PLACEHOLDER; 
+                      }} 
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-slate-800 font-devanagari text-sm truncate max-w-[180px] mx-auto">{formData.title || "पत्रिका का नाम"}</h4>
+                    <p className="text-[10px] text-orange-500 font-black font-devanagari uppercase">{formData.category} • {formData.year}</p>
+                  </div>
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
