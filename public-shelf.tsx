@@ -424,6 +424,16 @@ const PublicShelf: React.FC = () => {
               </div>
            </div>
 
+           {/* Developer Credit Block - Restored and Styled */}
+           <div className="mb-10 p-4 md:p-6 bg-white/5 rounded-2xl border border-white/10 text-center shadow-sm group hover:border-orange-500/30 transition-all duration-300">
+              <p className="text-white font-devanagari text-sm md:text-base flex flex-col md:flex-row items-center justify-center gap-1 md:gap-3">
+                 <span className="text-slate-400 font-semibold italic">एप्लीकेशन डिजाइन & डेवलप by</span>
+                 <span className="text-orange-500 font-black tracking-wide drop-shadow-sm">
+                   पीयूष कुमार जगदीश चन्द्र भंसाली
+                 </span>
+              </p>
+           </div>
+
            <div className="pt-10 border-t border-white/10 flex flex-col md:flex-row items-center justify-center gap-6">
               <p className="text-white/50 font-devanagari text-sm md:text-base font-bold text-center">
                  {settings.footer_copyright || "© 2026 अखिल भारतीय धा. माहेश्वरी सभा. सर्वाधिकार सुरक्षित।"}
