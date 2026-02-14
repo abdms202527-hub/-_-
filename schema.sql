@@ -25,7 +25,15 @@ CREATE TABLE IF NOT EXISTS notices (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- 4. SITE SETTINGS TABLE
+-- 4. MEDIA TABLE (Fixed missing table)
+CREATE TABLE IF NOT EXISTS media (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  url TEXT NOT NULL,
+  title TEXT DEFAULT 'Untitled',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- 5. SITE SETTINGS TABLE
 CREATE TABLE IF NOT EXISTS site_settings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   key TEXT UNIQUE NOT NULL,
@@ -33,7 +41,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- 5. ANALYTICS TABLE
+-- 6. ANALYTICS TABLE
 CREATE TABLE IF NOT EXISTS analytics (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   visitor_id TEXT,
@@ -43,13 +51,13 @@ CREATE TABLE IF NOT EXISTS analytics (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- 6. SECURITY (RLS) - Idempotent
+-- 7. SECURITY (RLS)
 ALTER TABLE publications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE analytics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE media ENABLE ROW LEVEL SECURITY;
 
--- DROP AND RECREATE POLICIES TO ENSURE THEY WORK
 DO $$
 BEGIN
     DROP POLICY IF EXISTS "Public read publications" ON publications;
@@ -61,11 +69,19 @@ BEGIN
     DROP POLICY IF EXISTS "Public read settings" ON site_settings;
     CREATE POLICY "Public read settings" ON site_settings FOR SELECT USING (true);
     
+    DROP POLICY IF EXISTS "Public read media" ON media;
+    CREATE POLICY "Public read media" ON media FOR SELECT USING (true);
+    
     DROP POLICY IF EXISTS "Public insert analytics" ON analytics;
     CREATE POLICY "Public insert analytics" ON analytics FOR INSERT WITH CHECK (true);
-END $$;
+    
+    -- Admin write policies (assuming service role or simple public for demo purposes)
+    DROP POLICY IF EXISTS "Admin modify publications" ON publications;
+    CREATE POLICY "Admin modify publications" ON publications FOR ALL USING (true);
 
--- 7. INITIAL DATA (Optional - Add your first entry)
-INSERT INTO site_settings (key, value) 
-VALUES ('headline', 'समाज की डिजिटल लाइब्रेरी')
-ON CONFLICT (key) DO NOTHING;
+    DROP POLICY IF EXISTS "Admin modify notices" ON notices;
+    CREATE POLICY "Admin modify notices" ON notices FOR ALL USING (true);
+
+    DROP POLICY IF EXISTS "Admin modify media" ON media;
+    CREATE POLICY "Admin modify media" ON media FOR ALL USING (true);
+END $$;

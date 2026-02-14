@@ -2,8 +2,9 @@
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * यह फ़ंक्शन Vercel के Environment Variables से डेटा उठाता है।
- * यह 15,000+ यूज़र्स के लिए ग्लोबल कनेक्शन सुनिश्चित करता है।
+ * यह फ़ंक्शन प्राथमिकता के आधार पर URL और Key उठाता है:
+ * 1. पहले Environment Variables (Vercel/Production)
+ * 2. फिर आपके द्वारा प्रदान किए गए हार्डकोडेड क्रेडेंशियल्स
  */
 const getEnv = (key: string): string => {
   try {
@@ -18,27 +19,28 @@ const getEnv = (key: string): string => {
       return meta.env[`VITE_${key}`];
     }
     
-    // Local Fallback (Only for initial setup diagnostics)
-    return localStorage.getItem(`SB_${key}`) || '';
+    return '';
   } catch (e) {
     return '';
   }
 };
 
-const supabaseUrl = getEnv('SUPABASE_URL');
-const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY');
+// आपकी प्रदान की गई जानकारी यहाँ जोड़ी गई है
+const SUPABASE_URL_DEFAULT = 'https://kwkzyoppaxgvxeufgpqc.supabase.co';
+const SUPABASE_KEY_DEFAULT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3a3p5b3BwYXhndnhldWZncHFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNTIzNDgsImV4cCI6MjA4NjYyODM0OH0.NQcTG-I151yTYGCV288CkwTT2t7vBGjfPj-z_JNQvmA';
+
+const supabaseUrl = getEnv('SUPABASE_URL') || SUPABASE_URL_DEFAULT;
+const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY') || SUPABASE_KEY_DEFAULT;
 
 export const isSupabaseConfigured = () => {
-  return !!supabaseUrl && supabaseUrl.startsWith('https://');
+  // यदि URL 'https://' से शुरू होता है और 'missing' नहीं है, तो यह कॉन्फ़िगर माना जाएगा
+  return !!supabaseUrl && supabaseUrl.startsWith('https://') && !supabaseUrl.includes('missing');
 };
 
-// Global instance for all 15,000 users
-export const supabase = createClient(
-  supabaseUrl || 'https://missing.supabase.co',
-  supabaseAnonKey || 'missing-key'
-);
+// 15,000+ यूज़र्स के लिए ग्लोबल इंस्टेंस
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Helper to save for Admin debugging only
+// Debug Helper (Admin के लिए)
 export const saveDebugConfig = (url: string, key: string) => {
   localStorage.setItem('SB_SUPABASE_URL', url);
   localStorage.setItem('SB_SUPABASE_ANON_KEY', key);

@@ -9,9 +9,12 @@ import AdminPublications from './admin-publications.tsx';
 import AdminMedia from './admin-media.tsx';
 import AdminNotices from './admin-notices.tsx';
 import AdminSettings from './admin-settings.tsx';
+import AdminLogin from './admin-login.tsx';
 
 const App: React.FC = () => {
-  const [isAdmin, setIsAdmin] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('isAdminAuthenticated') === 'true';
+  });
 
   useEffect(() => {
     const logVisit = async () => {
@@ -30,17 +33,33 @@ const App: React.FC = () => {
     logVisit();
   }, []);
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('isAdminAuthenticated');
+  };
+
   return (
     <Router>
       <Routes>
         <Route path="/" element={<PublicShelf />} />
-        <Route path="/admin" element={isAdmin ? <AdminLayout /> : <Navigate to="/" />}>
+        
+        {/* Admin Section Protection */}
+        <Route 
+          path="/admin/login" 
+          element={!isAuthenticated ? <AdminLogin onLogin={setIsAuthenticated} /> : <Navigate to="/admin" />} 
+        />
+        
+        <Route 
+          path="/admin" 
+          element={isAuthenticated ? <AdminLayout onLogout={handleLogout} /> : <Navigate to="/admin/login" />}
+        >
           <Route index element={<AdminDashboard />} />
           <Route path="publications" element={<AdminPublications />} />
           <Route path="media" element={<AdminMedia />} />
           <Route path="notices" element={<AdminNotices />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
+
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
