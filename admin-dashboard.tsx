@@ -1,0 +1,138 @@
+
+import React from 'react';
+import { Users, Zap, Book, Star } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
+const MOCK_TRENDS = Array.from({ length: 30 }, (_, i) => ({
+  date: `${i + 1} फ़र`,
+  count: Math.floor(Math.random() * 50) + 20,
+}));
+
+const MOCK_DEVICES = [
+  { name: 'डेस्कटॉप', value: 65, color: '#2563eb' },
+  { name: 'मोबाइल', value: 35, color: '#f97316' },
+];
+
+const AdminDashboard: React.FC = () => {
+  return (
+    <div className="space-y-8 animate-fade-in">
+      {/* Top Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard icon={<Users className="text-blue-600" />} label="कुल आगंतुक" value="2450" />
+        <StatCard icon={<Zap className="text-orange-500" />} label="आज के विजिट" value="42" />
+        <StatCard icon={<Book className="text-purple-500" />} label="कृत प्रकाशन" value="12" />
+        <StatCard icon={<Star className="text-yellow-500" />} label="लोकप्रिय पत्रिका" value="शुभ शगुन" subValue="समाज की..." />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Visitor Trends Line Chart */}
+        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold text-slate-800 font-devanagari">विज़िटर ट्रेंड्स (30 दिन)</h3>
+          </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={MOCK_TRENDS}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip 
+                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                />
+                <Line type="monotone" dataKey="count" stroke="#2563eb" strokeWidth={3} dot={{ r: 4, fill: '#2563eb' }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Device Distribution Donut */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <h3 className="text-lg font-bold text-slate-800 font-devanagari mb-6">डिवाइस डिस्ट्रीब्यूशन</h3>
+          <div className="h-64 relative">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={MOCK_DEVICES}
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {MOCK_DEVICES.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-4 space-y-2">
+            {MOCK_DEVICES.map((d) => (
+              <div key={d.name} className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }}></div>
+                  <span className="font-devanagari text-slate-600">{d.name}</span>
+                </div>
+                <span className="font-bold text-slate-800">{d.value}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Live Visitor Log */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-800 font-devanagari">लाइव विज़िटर लॉग</h3>
+          <span className="bg-green-100 text-green-600 text-xs px-2 py-1 rounded font-bold uppercase tracking-wider animate-pulse">Live Update</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 text-slate-500 font-devanagari text-sm">
+              <tr>
+                <th className="px-6 py-4">समय</th>
+                <th className="px-6 py-4">डिवाइस</th>
+                <th className="px-6 py-4">टोकन</th>
+                <th className="px-6 py-4">प्लेटफ़ॉर्म</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-600 text-sm">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-6 py-4">12:4{i} PM</td>
+                  <td className="px-6 py-4">Windows Desktop</td>
+                  <td className="px-6 py-4 text-xs font-mono">tk_8723...{i}</td>
+                  <td className="px-6 py-4">Chrome 122.0</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface StatCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  subValue?: string;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ icon, label, value, subValue }) => (
+  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5">
+    <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center">
+      {icon}
+    </div>
+    <div>
+      <p className="text-slate-500 font-devanagari text-sm">{label}</p>
+      <div className="flex items-baseline gap-2">
+        <h4 className="text-2xl font-bold text-slate-800">{value}</h4>
+        {subValue && <span className="text-xs text-slate-400 font-devanagari">{subValue}</span>}
+      </div>
+    </div>
+  </div>
+);
+
+export default AdminDashboard;
