@@ -6,6 +6,7 @@ import { supabase, convertDriveLink } from './lib/supabase.ts';
 interface MediaItem {
   id: string;
   url: string;
+  file_url?: string;
   title: string;
   file_name?: string;
   created_at: string;
@@ -45,37 +46,43 @@ const AdminMedia: React.FC = () => {
   useEffect(() => { fetchMedia(); }, []);
 
   const handleAddImage = async () => {
-    let url = prompt("इमेज का URL डालें (Google Drive लिंक भी चलेगा):");
-    if (!url) return;
+    let rawUrl = prompt("इमेज का URL डालें (e.g., Google Drive लिंक):");
+    if (!rawUrl) return;
     
-    // लिंक को यहीं कन्वर्ट करें ताकि भविष्य में समस्या न हो
-    const directUrl = convertDriveLink(url);
+    const directUrl = convertDriveLink(rawUrl);
+    if (!directUrl) {
+      showStatus("अमान्य URL", "error");
+      return;
+    }
+
     const titleInput = prompt("इमेज का शीर्षक (वैकल्पिक):") || 'Media Image';
-    
     const safeFileName = titleInput.toLowerCase().replace(/[^\w]/g, '-') + '-' + Date.now();
 
     try {
       setSaving(true);
-      const { error: insertError } = await supabase.from('media').insert([{ 
-        url: directUrl, 
+      // Ensure we send both 'url' and 'file_url' to prevent any NOT NULL constraint errors
+      const insertData = { 
+        url: directUrl,
+        file_url: directUrl, 
         title: titleInput,
         file_name: safeFileName 
-      }]);
+      };
+
+      const { error: insertError } = await supabase.from('media').insert([insertData]);
       
       if (insertError) throw insertError;
       
       showStatus("इमेज सफलतापूर्वक गैलरी में जोड़ी गई!");
       fetchMedia();
     } catch (err: any) {
-      console.error("Media Error:", err);
-      showStatus("त्रुटि: " + err.message, "error");
+      console.error("Media Error Detail:", err);
+      showStatus("त्रुटि: " + (err.message || "इमेज सेव नहीं हो सकी"), "error");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!media.find(m => m.id === id)) return;
     if (!confirm("क्या आप इस इमेज को लाइब्रेरी से हटाना चाहते हैं?")) return;
     try {
       const { error } = await supabase.from('media').delete().eq('id', id);
@@ -90,7 +97,6 @@ const AdminMedia: React.FC = () => {
   const handleSetAsBackground = async (url: string) => {
     try {
       setSaving(true);
-      // सीधे इमेज लिंक को site_settings में सेव करें
       const { error } = await supabase.from('site_settings').upsert({
         key: 'divine_bg_url',
         value: url,
@@ -140,22 +146,22 @@ const AdminMedia: React.FC = () => {
          ) : media.length > 0 ? (
            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-10 relative z-10">
               {media.map((item) => {
-                const isActive = activeBgUrl === item.url;
+                const imgUrl = item.file_url || item.url;
+                const isActive = activeBgUrl === imgUrl;
                 return (
                   <div key={item.id} className={`group relative bg-white rounded-[2rem] overflow-hidden border-2 transition-all duration-500 hover:shadow-2xl ${isActive ? 'border-orange-400 ring-4 ring-orange-500/10' : 'border-slate-50'}`}>
                     <div className="aspect-[4/5] relative bg-slate-100">
                       <img 
-                        src={item.url} 
+                        src={imgUrl} 
                         alt={item.title} 
                         className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x500?text=Invalid+Link'; }} 
                       />
                       
-                      {/* Overlay Controls */}
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent flex flex-col items-center justify-end p-6 opacity-0 group-hover:opacity-100 transition-all duration-300">
                         <div className="flex flex-col gap-2 w-full">
                           <button 
-                            onClick={() => handleSetAsBackground(item.url)} 
+                            onClick={() => handleSetAsBackground(imgUrl)} 
                             className={`w-full py-3 rounded-xl font-bold font-devanagari text-xs flex items-center justify-center gap-2 transition-all ${isActive ? 'bg-orange-500 text-white' : 'bg-white text-slate-900 hover:bg-orange-50'}`}
                           >
                             <Sparkles size={14} /> {isActive ? "सक्रिय बैकग्राउंड" : "बैकग्राउंड बनाएँ"}

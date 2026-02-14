@@ -248,7 +248,7 @@ const PublicShelf: React.FC = () => {
          </section>
       </main>
 
-      {/* FOOTER RESTORED AND IMPROVED */}
+      {/* FOOTER - ENHANCED TYPOGRAPHY AND WHATSAPP NUMBER */}
       <footer className="bg-[#1a0505] text-white pt-20 pb-10 relative overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-30"></div>
@@ -258,87 +258,87 @@ const PublicShelf: React.FC = () => {
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16 mb-20 text-left">
               
               {/* Column 1: About */}
-              <div className="space-y-6">
+              <div className="space-y-8">
                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-white rounded-2xl p-2 shadow-2xl ring-4 ring-white/10">
+                    <div className="w-20 h-20 bg-white rounded-2xl p-2 shadow-2xl ring-4 ring-white/10">
                        <img src={convertDriveLink(settings.logo_url) || LOGO_FALLBACK} className="w-full h-full object-contain" alt="Logo" />
                     </div>
                     <div>
-                       <h5 className="font-black font-devanagari text-lg text-orange-400 leading-tight">अखिल भारतीय धा. माहेश्वरी सभा</h5>
+                       <h5 className="font-black font-devanagari text-2xl text-orange-400 leading-tight">अखिल भारतीय धा. माहेश्वरी सभा</h5>
                     </div>
                  </div>
-                 <p className="text-white/50 font-devanagari text-xs leading-relaxed font-medium">
+                 <p className="text-white/70 font-devanagari text-sm md:text-base leading-relaxed font-bold">
                     हमारी डिजिटल लाइब्रेरी समाज के ज्ञान, संस्कृति और गौरवशाली इतिहास को सुरक्षित रखने और उसे अगली पीढ़ी तक पहुँचाने का एक विनम्र प्रयास है।
                  </p>
-                 <div className="flex gap-3">
-                    <a href="#" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Facebook size={18} /></a>
-                    <a href="#" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Twitter size={18} /></a>
-                    <a href="#" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Instagram size={18} /></a>
-                    <a href="#" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Youtube size={18} /></a>
+                 <div className="flex gap-4">
+                    <a href="#" className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Facebook size={24} /></a>
+                    <a href="#" className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Twitter size={24} /></a>
+                    <a href="#" className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Instagram size={24} /></a>
+                    <a href="#" className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Youtube size={24} /></a>
                  </div>
               </div>
 
               {/* Column 2: Quick Links */}
-              <div className="space-y-6">
-                 <h6 className="text-sm font-black font-devanagari uppercase tracking-[0.2em] text-white flex items-center gap-3">
-                    <div className="w-1 h-4 bg-orange-500 rounded-full"></div> महत्वपूर्ण लिंक्स
+              <div className="space-y-8">
+                 <h6 className="text-lg font-black font-devanagari uppercase tracking-[0.2em] text-white flex items-center gap-3">
+                    <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div> महत्वपूर्ण लिंक्स
                  </h6>
-                 <ul className="space-y-4 font-devanagari text-sm">
+                 <ul className="space-y-5 font-devanagari text-base">
                     {importantLinks.length > 0 ? importantLinks.map((link, i) => (
                       <li key={i}>
-                        <a href={link.url} target="_blank" rel="noreferrer" className="text-white/40 hover:text-orange-400 flex items-center gap-2 transition-all group">
-                          <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> {link.title}
+                        <a href={link.url} target="_blank" rel="noreferrer" className="text-white/60 hover:text-orange-400 flex items-center gap-3 transition-all group font-bold">
+                          <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform text-orange-500" /> {link.title}
                         </a>
                       </li>
                     )) : (
                       <>
-                        <li><a href="#" className="text-white/40 hover:text-orange-400 transition-all">मुख्य पृष्ठ</a></li>
-                        <li><a href="#" className="text-white/40 hover:text-orange-400 transition-all">सभा के बारे में</a></li>
-                        <li><a href="#" className="text-white/40 hover:text-orange-400 transition-all">सदस्यता अभियान</a></li>
+                        <li><a href="#" className="text-white/60 hover:text-orange-400 transition-all font-bold flex items-center gap-2"><ChevronRight size={16} /> मुख्य पृष्ठ</a></li>
+                        <li><a href="#" className="text-white/60 hover:text-orange-400 transition-all font-bold flex items-center gap-2"><ChevronRight size={16} /> सभा के बारे में</a></li>
+                        <li><a href="#" className="text-white/60 hover:text-orange-400 transition-all font-bold flex items-center gap-2"><ChevronRight size={16} /> सदस्यता अभियान</a></li>
                       </>
                     )}
                  </ul>
               </div>
 
               {/* Column 3: Contact */}
-              <div className="space-y-6">
-                 <h6 className="text-sm font-black font-devanagari uppercase tracking-[0.2em] text-white flex items-center gap-3">
-                    <div className="w-1 h-4 bg-orange-500 rounded-full"></div> संपर्क करें
+              <div className="space-y-8">
+                 <h6 className="text-lg font-black font-devanagari uppercase tracking-[0.2em] text-white flex items-center gap-3">
+                    <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div> संपर्क करें
                  </h6>
-                 <div className="space-y-5 font-devanagari text-xs">
-                    <div className="flex items-start gap-4 text-white/50">
-                       <MapPin className="text-orange-500 shrink-0" size={18} />
-                       <span className="leading-relaxed font-medium">अखिल भारतीय धा. माहेश्वरी सभा, केन्द्रीय कार्यालय, राजस्थान</span>
+                 <div className="space-y-6 font-devanagari text-sm md:text-base">
+                    <div className="flex items-start gap-4 text-white/70">
+                       <MapPin className="text-orange-500 shrink-0 mt-1" size={24} />
+                       <span className="leading-relaxed font-bold">अखिल भारतीय धा. माहेश्वरी सभा, केन्द्रीय कार्यालय, राजस्थान</span>
                     </div>
-                    <div className="flex items-center gap-4 text-white/50 hover:text-white transition-colors">
-                       <Phone className="text-orange-500 shrink-0" size={18} />
-                       <span className="font-bold">+91 0000-000000</span>
+                    <div className="flex items-center gap-4 text-white/70 hover:text-white transition-colors">
+                       <Phone className="text-orange-500 shrink-0" size={24} />
+                       <span className="font-black text-lg">+91 0000-000000</span>
                     </div>
-                    <div className="flex items-center gap-4 text-white/50 hover:text-white transition-colors">
-                       <Mail className="text-orange-500 shrink-0" size={18} />
-                       <span className="font-bold">info@maheshwarisabha.com</span>
+                    <div className="flex items-center gap-4 text-white/70 hover:text-white transition-colors">
+                       <Mail className="text-orange-500 shrink-0" size={24} />
+                       <span className="font-black text-lg">info@maheshwarisabha.com</span>
                     </div>
                  </div>
               </div>
 
               {/* Column 4: Newsletter/Support */}
-              <div className="space-y-6 bg-white/5 p-8 rounded-[2rem] border border-white/5 backdrop-blur-sm">
-                 <h6 className="text-sm font-black font-devanagari uppercase tracking-[0.2em] text-white">डिजिटल सहायता</h6>
-                 <p className="text-[10px] font-devanagari text-white/40 leading-relaxed font-bold">
+              <div className="space-y-8 bg-white/5 p-10 rounded-[2.5rem] border border-white/5 backdrop-blur-sm shadow-2xl">
+                 <h6 className="text-lg font-black font-devanagari uppercase tracking-[0.2em] text-white">डिजिटल सहायता</h6>
+                 <p className="text-xs md:text-sm font-devanagari text-white/60 leading-relaxed font-black">
                     वेबसाइट या पब्लिकेशन से संबंधित किसी भी समस्या के लिए हमें संदेश भेजें।
                  </p>
-                 <a href="https://wa.me/910000000000" className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-black font-devanagari py-3 rounded-xl text-xs shadow-xl transition-all">
+                 <a href="https://wa.me/919039363610" className="flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 text-white font-black font-devanagari py-5 rounded-2xl text-base md:text-lg shadow-2xl transition-all active:scale-95">
                     व्हाट्सएप पर जुड़ें
                  </a>
               </div>
            </div>
 
            {/* Bottom Bar */}
-           <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-              <p className="text-white/30 font-devanagari text-[10px] font-bold">
+           <div className="pt-10 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-6">
+              <p className="text-white/50 font-devanagari text-sm md:text-base font-bold">
                  {settings.footer_copyright || "© 2026 अखिल भारतीय धा. माहेश्वरी सभा. सर्वाधिकार सुरक्षित।"}
               </p>
-              <div className="flex items-center gap-6 text-[10px] font-black font-devanagari uppercase tracking-widest text-white/20">
+              <div className="flex items-center gap-8 text-xs md:text-sm font-black font-devanagari uppercase tracking-[0.2em] text-white/40">
                  <a href="#" className="hover:text-white transition-colors">गोपनीयता नीति</a>
                  <a href="#" className="hover:text-white transition-colors">नियम और शर्तें</a>
               </div>

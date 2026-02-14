@@ -143,7 +143,6 @@ const AdminPublications: React.FC = () => {
         </div>
       </div>
 
-      {/* Search Bar */}
       <div className="bg-white p-5 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 flex items-center gap-4 shadow-sm group focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
         <Search size={22} className="text-slate-300 group-focus-within:text-blue-500 transition-colors" />
         <input 
@@ -155,7 +154,6 @@ const AdminPublications: React.FC = () => {
         />
       </div>
 
-      {/* Publications Table */}
       <div className="bg-white rounded-[2.5rem] md:rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm">
         {loading ? (
           <div className="p-20 text-center flex flex-col items-center gap-4">
@@ -224,11 +222,9 @@ const AdminPublications: React.FC = () => {
         )}
       </div>
 
-      {/* Main Form Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[95vh] animate-in zoom-in-95 duration-300">
-            {/* Form Section */}
             <div className="flex-1 p-8 md:p-10 space-y-8 overflow-y-auto no-scrollbar">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-black font-devanagari text-slate-800">{editingId ? "प्रकाशन विवरण सुधारें" : "नया प्रकाशन जोड़ें"}</h2>
@@ -304,7 +300,6 @@ const AdminPublications: React.FC = () => {
                         setPreviewLoaded(false);
                     }} 
                   />
-                  <p className="text-[10px] text-slate-400 font-devanagari italic ml-1">Google Drive लिंक को हम स्वचालित रूप से इमेज में बदल देंगे।</p>
                 </div>
 
                 <button 
@@ -318,12 +313,9 @@ const AdminPublications: React.FC = () => {
               </form>
             </div>
 
-            {/* Preview Section */}
             <div className="hidden md:flex w-80 bg-slate-50 p-10 flex-col items-center justify-center border-l border-slate-100 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100/50 rounded-full blur-3xl -mr-16 -mt-16"></div>
-              
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 relative z-10">लाइव प्रीव्यू</p>
-              
               <div className="relative z-10 w-44 h-60 bg-white rounded-2xl shadow-2xl border-4 border-white overflow-hidden group flex items-center justify-center bg-slate-100">
                 {!previewLoaded && formData.cover_url && (
                     <div className="absolute inset-0 flex items-center justify-center bg-slate-50 z-20">
@@ -349,26 +341,19 @@ const AdminPublications: React.FC = () => {
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
               </div>
-
               <div className="mt-6 text-center space-y-1 relative z-10 w-full px-4">
                 <p className="font-bold text-slate-800 font-devanagari text-sm truncate">{formData.title || "पत्रिका का नाम"}</p>
                 <p className="text-[10px] text-blue-600 font-black font-devanagari uppercase tracking-widest">{formData.category}</p>
                 <p className="text-[10px] text-slate-400 font-bold font-devanagari">{formData.year}</p>
               </div>
-
-              <button 
-                onClick={() => setIsModalOpen(false)} 
-                className="mt-12 text-slate-400 hover:text-red-500 font-bold font-devanagari transition-colors flex items-center gap-2 relative z-10 text-xs"
-              >
-                <X size={14} />
-                <span>रद्द करें</span>
+              <button onClick={() => setIsModalOpen(false)} className="mt-12 text-slate-400 hover:text-red-500 font-bold font-devanagari transition-colors flex items-center gap-2 relative z-10 text-xs">
+                <X size={14} /> <span>रद्द करें</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Media Picker Modal */}
       {isMediaPickerOpen && (
         <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-300">
            <div className="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
@@ -378,32 +363,28 @@ const AdminPublications: React.FC = () => {
                  </h3>
                  <button onClick={() => setIsMediaPickerOpen(false)} className="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 rounded-full hover:bg-red-50 hover:text-red-500 transition-all"><X size={20} /></button>
               </div>
-              
               <div className="flex-1 overflow-y-auto p-6 grid grid-cols-3 sm:grid-cols-4 gap-4 no-scrollbar">
-                {mediaItems.length > 0 ? mediaItems.map((item) => (
-                  <button 
-                    key={item.id}
-                    onClick={() => {
-                      setFormData({...formData, cover_url: item.url});
-                      setPreviewLoaded(false);
-                      setIsMediaPickerOpen(false);
-                    }}
-                    className="group relative aspect-square rounded-xl overflow-hidden border-2 border-slate-100 hover:border-blue-500 transition-all shadow-sm"
-                  >
-                     <img src={item.url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={item.title} />
-                     <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/20 transition-all flex items-center justify-center">
-                        <Check size={24} className="text-white opacity-0 group-hover:opacity-100" />
-                     </div>
-                  </button>
-                )) : (
-                  <div className="col-span-full py-20 text-center text-slate-300 font-devanagari italic">
-                    गैलरी में कोई इमेज नहीं है।
-                  </div>
+                {mediaItems.length > 0 ? mediaItems.map((item) => {
+                  const itemUrl = item.file_url || item.url;
+                  return (
+                    <button 
+                      key={item.id}
+                      onClick={() => {
+                        setFormData({...formData, cover_url: itemUrl});
+                        setPreviewLoaded(false);
+                        setIsMediaPickerOpen(false);
+                      }}
+                      className="group relative aspect-square rounded-xl overflow-hidden border-2 border-slate-100 hover:border-blue-500 transition-all shadow-sm"
+                    >
+                       <img src={itemUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={item.title} />
+                       <div className="absolute inset-0 bg-blue-600/20 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                          <Check size={24} className="text-white" />
+                       </div>
+                    </button>
+                  )
+                }) : (
+                  <div className="col-span-full py-20 text-center text-slate-300 font-devanagari italic">गैलरी में कोई इमेज नहीं है।</div>
                 )}
-              </div>
-              
-              <div className="p-4 bg-slate-50 text-center border-t border-slate-100">
-                <p className="text-[10px] text-slate-400 font-devanagari">मीडिया गैलरी में इमेज जोड़ने के लिए 'मीडिया गैलरी' टैब का उपयोग करें।</p>
               </div>
            </div>
         </div>

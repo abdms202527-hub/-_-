@@ -25,30 +25,33 @@ CREATE TABLE IF NOT EXISTS notices (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- 4. MEDIA TABLE (Updated with file_name for better compatibility)
+-- 4. MEDIA TABLE (Optimized to fix 'file_url' not-null constraint error)
 CREATE TABLE IF NOT EXISTS media (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  url TEXT NOT NULL,
+  url TEXT,
+  file_url TEXT, 
   title TEXT DEFAULT 'Untitled Image',
   file_name TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- Fix constraints if they exist
+-- IMPORTANT: Copy and Run this block in your Supabase SQL Editor 
+-- to fix the 'null value in column file_url' error permanently.
 DO $$
 BEGIN
-    -- Ensure title exists
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='media' AND column_name='title') THEN
-        ALTER TABLE media ADD COLUMN title TEXT DEFAULT 'Untitled Image';
+    -- 1. Ensure file_url column exists
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='media' AND column_name='file_url') THEN
+        ALTER TABLE media ADD COLUMN file_url TEXT;
     END IF;
     
-    -- Ensure file_name exists
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='media' AND column_name='file_name') THEN
-        ALTER TABLE media ADD COLUMN file_name TEXT;
-    END IF;
+    -- 2. Sync existing data so no old records have NULL file_url
+    UPDATE media SET file_url = url WHERE file_url IS NULL;
+    UPDATE media SET url = file_url WHERE url IS NULL;
 
-    -- Drop NOT NULL constraint on file_name to prevent future errors
-    ALTER TABLE media ALTER COLUMN file_name DROP NOT NULL;
+    -- 3. REMOVE the NOT NULL constraint if it was accidentally applied
+    -- This is the most critical fix for the error shown in your screenshot.
+    ALTER TABLE media ALTER COLUMN file_url DROP NOT NULL;
+    ALTER TABLE media ALTER COLUMN url DROP NOT NULL;
 END $$;
 
 -- 5. SITE SETTINGS TABLE
@@ -93,7 +96,6 @@ BEGIN
     DROP POLICY IF EXISTS "Public insert analytics" ON analytics;
     CREATE POLICY "Public insert analytics" ON analytics FOR INSERT WITH CHECK (true);
     
-    -- Admin write policies
     DROP POLICY IF EXISTS "Admin modify publications" ON publications;
     CREATE POLICY "Admin modify publications" ON publications FOR ALL USING (true);
 
