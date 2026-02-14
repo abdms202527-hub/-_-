@@ -10,6 +10,7 @@ import AdminMedia from './admin-media.tsx';
 import AdminNotices from './admin-notices.tsx';
 import AdminSettings from './admin-settings.tsx';
 import AdminLinks from './admin-links.tsx';
+import AdminFooter from './admin-footer.tsx';
 import AdminLogin from './admin-login.tsx';
 
 const App: React.FC = () => {
@@ -60,6 +61,7 @@ const App: React.FC = () => {
           <Route path="media" element={<AdminMedia />} />
           <Route path="notices" element={<AdminNotices />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="footer" element={<AdminFooter />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" />} />

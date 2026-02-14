@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Save, Smartphone, Palette, Globe, Phone, Image as ImageIcon, Settings, Loader2, Tag, Plus, X, Type, Star, AlertCircle, CheckCircle, FileText, Copyright } from 'lucide-react';
+import { Save, Smartphone, Palette, Globe, Phone, Image as ImageIcon, Settings, Loader2, Tag, Plus, X, Type, Star, AlertCircle, CheckCircle, FileText, Copyright, Heading1 } from 'lucide-react';
 import { supabase, convertDriveLink } from './lib/supabase.ts';
 
 const LOGO_PLACEHOLDER = "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=100&auto=format&fit=crop";
@@ -53,7 +53,6 @@ const AdminSettings: React.FC = () => {
     try {
       setSaving(true);
       
-      // Google Drive लिंक को साफ़ करें अगर वह लोगो URL में है
       const logoUrl = convertDriveLink(settings.logo_url || '');
       
       const finalMap: Record<string, string> = {
@@ -167,6 +166,15 @@ const AdminSettings: React.FC = () => {
           </div>
 
           <div className="space-y-6">
+            {/* Added Hero Title field as requested */}
+            <SettingsField 
+              label="मुख्य शीर्षक (HERO TITLE)" 
+              value={settings.hero_title || ''} 
+              onChange={(v: string) => setSettings({...settings, hero_title: v})} 
+              icon={<Heading1 size={18} />} 
+              placeholder="समाज की ज्ञान संपदा"
+            />
+
             <SettingsField 
               label="हीरो सेक्शन विवरण (Hero Subtitle)" 
               value={settings.hero_description || ''} 

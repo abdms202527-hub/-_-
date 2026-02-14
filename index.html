@@ -3,14 +3,24 @@
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Digital Library & Magazine Management</title>
+    
+    <!-- PWA & Mobile Optimization Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="माहेश्वरी लाइब्रेरी">
+    <meta name="theme-color" content="#7f1d1d">
+    <meta name="mobile-web-app-capable" content="yes">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', 'Noto+Sans+Devanagari', sans-serif;
             background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: contain;
         }
         @keyframes marquee {
           0% { transform: translateX(100%); }
@@ -23,6 +33,16 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .font-devanagari { font-family: 'Noto Sans Devanagari', sans-serif; }
+        
+        /* Smooth Mobile Scrolling */
+        .smooth-scroll {
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Custom Pull-to-refresh feel */
+        body {
+            touch-action: pan-x pan-y;
+        }
     </style>
 <script type="importmap">
 {
@@ -41,7 +61,6 @@
 </head>
 <body>
     <div id="root"></div>
-    <!-- Add the script tag to load the application -->
     <script type="module" src="index.tsx"></script>
 <script type="module" src="/index.tsx"></script>
 </body>

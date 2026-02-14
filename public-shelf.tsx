@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, BookOpen, Smartphone, Info, Loader2, AlertCircle, X, Filter, Sparkles, ChevronRight, BookMarked, ArrowRight, Phone, Mail, MapPin, Link as LinkIcon, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { Search, BookOpen, Smartphone, Info, Loader2, AlertCircle, X, Filter, Sparkles, ChevronRight, BookMarked, ArrowRight, Phone, Mail, MapPin, Link as LinkIcon, Facebook, Twitter, Instagram, Youtube, Code2, ExternalLink, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase, convertDriveLink } from './lib/supabase.ts';
 import { Publication, Notice } from './types.ts';
@@ -20,8 +20,16 @@ const PublicShelf: React.FC = () => {
   const [importantLinks, setImportantLinks] = useState<any[]>([]);
   const [dynamicCategories, setDynamicCategories] = useState<string[]>(['सभी']);
   const [featuredBooks, setFeaturedBooks] = useState<Publication[]>([]);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   useEffect(() => {
+    // Check if on mobile to show install suggestion
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      const bannerHidden = localStorage.getItem('hideInstallBanner');
+      if (!bannerHidden) setShowInstallBanner(true);
+    }
+
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -86,7 +94,38 @@ const PublicShelf: React.FC = () => {
     .filter(p => (p.title || '').toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="min-h-screen bg-[#fffcf5] selection:bg-orange-200 overflow-x-hidden">
+    <div className="min-h-screen bg-[#fffcf5] selection:bg-orange-200 overflow-x-hidden pb-16 md:pb-0">
+      
+      {/* MOBILE INSTALL BANNER - FOR 15,000 USERS STRATEGY */}
+      {showInstallBanner && (
+        <div className="fixed bottom-0 left-0 right-0 z-[100] p-4 animate-in slide-in-from-bottom duration-500 lg:hidden">
+           <div className="bg-slate-900 text-white p-4 rounded-3xl shadow-2xl flex items-center justify-between border border-white/10 backdrop-blur-xl">
+              <div className="flex items-center gap-4">
+                 <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center p-2 shadow-lg">
+                    <img src={convertDriveLink(settings.logo_url) || LOGO_FALLBACK} className="w-full h-full object-contain" alt="App Icon" />
+                 </div>
+                 <div>
+                    <h4 className="font-devanagari font-black text-sm">समाज की लाइब्रेरी ऐप</h4>
+                    <p className="font-devanagari text-[10px] text-slate-400">फोन पर इंस्टॉल करने के लिए बटन दबाएं</p>
+                 </div>
+              </div>
+              <div className="flex items-center gap-2">
+                 <button 
+                  onClick={() => {
+                    alert("ऐप को इंस्टॉल करने के लिए अपने ब्राउज़र के 'Share' बटन पर क्लिक करें और 'Add to Home Screen' चुनें।");
+                  }}
+                  className="bg-orange-500 text-white px-4 py-2 rounded-xl text-xs font-black font-devanagari shadow-lg active:scale-95"
+                 >
+                    इंस्टॉल करें
+                 </button>
+                 <button onClick={() => { setShowInstallBanner(false); localStorage.setItem('hideInstallBanner', 'true'); }} className="p-2 text-slate-500">
+                    <X size={18} />
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
+
       {/* Notice Bar */}
       <div className="bg-[#7f1d1d] text-white py-2.5 overflow-hidden border-b border-orange-900/10 relative z-[60] shadow-sm">
         <div className="flex items-center gap-6 animate-marquee whitespace-nowrap">
@@ -134,7 +173,7 @@ const PublicShelf: React.FC = () => {
       </nav>
 
       {/* Hero Section */}
-      <header className="relative min-h-[65vh] md:min-h-[75vh] flex flex-col items-center justify-start overflow-hidden pt-40 md:pt-48 pb-4 md:pb-8">
+      <header className="relative min-h-[60vh] md:min-h-[75vh] flex flex-col items-center justify-start overflow-hidden pt-28 md:pt-36 pb-4 md:pb-8">
         <div className="absolute inset-0 z-0">
            <img 
             src={convertDriveLink(settings.divine_bg_url) || BG_FALLBACK} 
@@ -146,17 +185,39 @@ const PublicShelf: React.FC = () => {
            <div className="absolute inset-0 bg-gradient-to-t from-[#fffcf5] via-transparent to-transparent"></div>
         </div>
 
-        <div className="relative z-10 text-center space-y-4 md:space-y-6 px-6 mb-8 md:mb-12 max-w-5xl mx-auto">
+        <div className="relative z-10 text-center space-y-3 md:space-y-4 px-6 mb-6 md:mb-10 w-full max-w-6xl mx-auto flex flex-col items-center">
+          
+          {/* HEADER QUICK LINKS */}
+          <div className="mb-4 md:mb-8 flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full px-4">
+             <div className="flex items-center gap-2 md:gap-4 p-1.5 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
+                {importantLinks.length > 0 ? importantLinks.map((link, i) => (
+                  <a 
+                    key={i} 
+                    href={link.url} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all font-devanagari text-[10px] md:text-xs font-black whitespace-nowrap group"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500 opacity-60 group-hover:scale-125 transition-transform"></div>
+                    {link.title}
+                    <ExternalLink size={10} className="opacity-40 group-hover:opacity-100" />
+                  </a>
+                )) : (
+                  <span className="text-white/40 text-[10px] md:text-xs font-devanagari px-4 py-2 italic font-bold">महत्वपूर्ण लिंक उपलब्ध नहीं</span>
+                )}
+             </div>
+          </div>
+
           <h2 className="text-4xl md:text-7xl lg:text-8xl font-black font-devanagari leading-tight text-white drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] tracking-tight">
-            समाज की <span className="text-orange-400">ज्ञान संपदा</span>
+            {settings.hero_title || "समाज की ज्ञान संपदा"}
           </h2>
           
           <div className="flex flex-col items-center gap-3">
-            <div className="inline-flex items-center gap-2 px-6 md:px-8 py-3 bg-white/10 border border-white/20 rounded-full text-white text-[10px] md:text-xs font-black font-devanagari uppercase tracking-[0.4em] backdrop-blur-md">
+            <div className="inline-flex items-center gap-2 px-5 md:px-8 py-2 md:py-3 bg-white/10 border border-white/20 rounded-full text-white text-[10px] md:text-xs font-black font-devanagari uppercase tracking-[0.4em] backdrop-blur-md">
                <Sparkles size={14} className="text-orange-400" /> गौरवशाली विरासत
             </div>
             <p className="text-white/90 max-w-xl mx-auto font-devanagari text-[11px] md:text-lg leading-relaxed font-bold px-4">
-              हमारी संस्कृति और समाज के सभी प्रकाशनों को आधुनिक डिजिटल स्वरूप में अनुभव करें।
+              {settings.hero_description || "हमारी संस्कृति और समाज के सभी प्रकाशनों को आधुनिक डिजिटल स्वरूप में अनुभव करें।"}
             </p>
           </div>
         </div>
@@ -248,37 +309,36 @@ const PublicShelf: React.FC = () => {
          </section>
       </main>
 
-      {/* FOOTER - ENHANCED TYPOGRAPHY AND WHATSAPP NUMBER */}
+      {/* FOOTER */}
       <footer className="bg-[#1a0505] text-white pt-20 pb-10 relative overflow-hidden">
-        {/* Decorative elements */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-30"></div>
         <div className="absolute bottom-0 right-0 w-64 h-64 bg-orange-900/10 rounded-full blur-3xl -mb-32 -mr-32"></div>
 
         <div className="container mx-auto px-6 relative z-10">
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16 mb-20 text-left">
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16 mb-12 text-left">
               
-              {/* Column 1: About */}
               <div className="space-y-8">
                  <div className="flex items-center gap-4">
                     <div className="w-20 h-20 bg-white rounded-2xl p-2 shadow-2xl ring-4 ring-white/10">
                        <img src={convertDriveLink(settings.logo_url) || LOGO_FALLBACK} className="w-full h-full object-contain" alt="Logo" />
                     </div>
                     <div>
-                       <h5 className="font-black font-devanagari text-2xl text-orange-400 leading-tight">अखिल भारतीय धा. माहेश्वरी सभा</h5>
+                       <h5 className="font-black font-devanagari text-2xl text-orange-400 leading-tight">
+                         {settings.headline || "अखिल भारतीय धा. माहेश्वरी सभा"}
+                       </h5>
                     </div>
                  </div>
                  <p className="text-white/70 font-devanagari text-sm md:text-base leading-relaxed font-bold">
-                    हमारी डिजिटल लाइब्रेरी समाज के ज्ञान, संस्कृति और गौरवशाली इतिहास को सुरक्षित रखने और उसे अगली पीढ़ी तक पहुँचाने का एक विनम्र प्रयास है।
+                    {settings.hero_description || "हमारी डिजिटल लाइब्रेरी समाज के ज्ञान, संस्कृति और गौरवशाली इतिहास को सुरक्षित रखने और उसे अगली पीढ़ी तक पहुँचाने का एक विनम्र प्रयास है।"}
                  </p>
                  <div className="flex gap-4">
-                    <a href="#" className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Facebook size={24} /></a>
-                    <a href="#" className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Twitter size={24} /></a>
-                    <a href="#" className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Instagram size={24} /></a>
-                    <a href="#" className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Youtube size={24} /></a>
+                    <a href={settings.footer_facebook || "#"} target="_blank" rel="noreferrer" className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Facebook size={24} /></a>
+                    <a href={settings.footer_twitter || "#"} target="_blank" rel="noreferrer" className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Twitter size={24} /></a>
+                    <a href={settings.footer_instagram || "#"} target="_blank" rel="noreferrer" className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Instagram size={24} /></a>
+                    <a href={settings.footer_youtube || "#"} target="_blank" rel="noreferrer" className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center hover:bg-orange-500 transition-all border border-white/5"><Youtube size={24} /></a>
                  </div>
               </div>
 
-              {/* Column 2: Quick Links */}
               <div className="space-y-8">
                  <h6 className="text-lg font-black font-devanagari uppercase tracking-[0.2em] text-white flex items-center gap-3">
                     <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div> महत्वपूर्ण लिंक्स
@@ -294,13 +354,11 @@ const PublicShelf: React.FC = () => {
                       <>
                         <li><a href="#" className="text-white/60 hover:text-orange-400 transition-all font-bold flex items-center gap-2"><ChevronRight size={16} /> मुख्य पृष्ठ</a></li>
                         <li><a href="#" className="text-white/60 hover:text-orange-400 transition-all font-bold flex items-center gap-2"><ChevronRight size={16} /> सभा के बारे में</a></li>
-                        <li><a href="#" className="text-white/60 hover:text-orange-400 transition-all font-bold flex items-center gap-2"><ChevronRight size={16} /> सदस्यता अभियान</a></li>
                       </>
                     )}
                  </ul>
               </div>
 
-              {/* Column 3: Contact */}
               <div className="space-y-8">
                  <h6 className="text-lg font-black font-devanagari uppercase tracking-[0.2em] text-white flex items-center gap-3">
                     <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div> संपर्क करें
@@ -308,32 +366,42 @@ const PublicShelf: React.FC = () => {
                  <div className="space-y-6 font-devanagari text-sm md:text-base">
                     <div className="flex items-start gap-4 text-white/70">
                        <MapPin className="text-orange-500 shrink-0 mt-1" size={24} />
-                       <span className="leading-relaxed font-bold">अखिल भारतीय धा. माहेश्वरी सभा, केन्द्रीय कार्यालय, राजस्थान</span>
+                       <span className="leading-relaxed font-bold">
+                         {settings.footer_address || "अखिल भारतीय धा. माहेश्वरी सभा, केन्द्रीय कार्यालय, राजस्थान"}
+                       </span>
                     </div>
                     <div className="flex items-center gap-4 text-white/70 hover:text-white transition-colors">
                        <Phone className="text-orange-500 shrink-0" size={24} />
-                       <span className="font-black text-lg">+91 0000-000000</span>
+                       <span className="font-black text-lg">{settings.footer_phone || "+91 0000-000000"}</span>
                     </div>
                     <div className="flex items-center gap-4 text-white/70 hover:text-white transition-colors">
                        <Mail className="text-orange-500 shrink-0" size={24} />
-                       <span className="font-black text-lg">info@maheshwarisabha.com</span>
+                       <span className="font-black text-lg">{settings.footer_email || "info@maheshwarisabha.com"}</span>
                     </div>
                  </div>
               </div>
 
-              {/* Column 4: Newsletter/Support */}
               <div className="space-y-8 bg-white/5 p-10 rounded-[2.5rem] border border-white/5 backdrop-blur-sm shadow-2xl">
                  <h6 className="text-lg font-black font-devanagari uppercase tracking-[0.2em] text-white">डिजिटल सहायता</h6>
                  <p className="text-xs md:text-sm font-devanagari text-white/60 leading-relaxed font-black">
                     वेबसाइट या पब्लिकेशन से संबंधित किसी भी समस्या के लिए हमें संदेश भेजें।
                  </p>
-                 <a href="https://wa.me/919039363610" className="flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 text-white font-black font-devanagari py-5 rounded-2xl text-base md:text-lg shadow-2xl transition-all active:scale-95">
+                 <a href={`https://wa.me/91${settings.footer_whatsapp || "9039363610"}`} className="flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 text-white font-black font-devanagari py-5 rounded-2xl text-base md:text-lg shadow-2xl transition-all active:scale-95">
                     व्हाट्सएप पर जुड़ें
                  </a>
               </div>
            </div>
 
-           {/* Bottom Bar */}
+           <div className="mb-10 p-4 md:p-6 bg-white/5 rounded-2xl border border-white/10 text-center shadow-sm group hover:border-orange-500/30 transition-all duration-300">
+              <p className="text-white font-devanagari text-sm md:text-base font-bold flex flex-row items-center justify-center gap-2 md:gap-3">
+                 <Code2 size={18} className="text-orange-500 group-hover:rotate-12 transition-transform" />
+                 <span className="text-slate-400">एप्लीकेशन डेवलपर :-</span>
+                 <span className="text-white hover:text-orange-400 transition-colors">
+                   पीयूष कुमार जगदीश चन्द्र भंसाली
+                 </span>
+              </p>
+           </div>
+
            <div className="pt-10 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-6">
               <p className="text-white/50 font-devanagari text-sm md:text-base font-bold">
                  {settings.footer_copyright || "© 2026 अखिल भारतीय धा. माहेश्वरी सभा. सर्वाधिकार सुरक्षित।"}
