@@ -140,8 +140,8 @@ const PublicShelf: React.FC = () => {
         </Link>
       </nav>
 
-      {/* Hero Section - Optimized height and centered text */}
-      <header className="relative min-h-[65vh] md:min-h-[75vh] flex flex-col items-center justify-start overflow-hidden pt-32 md:pt-40 pb-4 md:pb-8">
+      {/* Hero Section */}
+      <header className="relative min-h-[65vh] md:min-h-[75vh] flex flex-col items-center justify-start overflow-hidden pt-40 md:pt-48 pb-4 md:pb-8">
         <div className="absolute inset-0 z-0">
            <img 
             src={settings.divine_bg_url || BG_FALLBACK} 
@@ -149,29 +149,33 @@ const PublicShelf: React.FC = () => {
             className="w-full h-full object-cover object-top opacity-50 mix-blend-multiply"
             onError={(e) => { (e.target as any).src = BG_FALLBACK; }}
            />
-           {/* Enhanced Dark-Light Shade Effect */}
-           <div className="absolute inset-0 bg-gradient-to-b from-[#1a0505]/60 via-[#1a0505]/20 to-[#fffcf5]"></div>
+           {/* Shade Effect */}
+           <div className="absolute inset-0 bg-gradient-to-b from-[#1a0505]/70 via-[#1a0505]/30 to-[#fffcf5]"></div>
            <div className="absolute inset-0 bg-gradient-to-t from-[#fffcf5] via-transparent to-transparent"></div>
         </div>
 
-        {/* Hero Text - Centered and Resized to 4xl */}
-        <div className="relative z-10 text-center space-y-3 md:space-y-4 px-6 mb-8 md:mb-10 max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 bg-[#7f1d1d]/20 border border-white/20 rounded-full text-white text-[8px] md:text-[10px] font-black font-devanagari uppercase tracking-[0.3em] backdrop-blur-md">
-             <Sparkles size={12} className="text-orange-400" /> ज्ञानम् परमम् ध्येयम्
-          </div>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-black font-devanagari leading-tight text-white drop-shadow-2xl">
+        {/* Hero Text - Primary heading at the TOP center */}
+        <div className="relative z-10 text-center space-y-4 md:space-y-6 px-6 mb-8 md:mb-12 max-w-5xl mx-auto">
+          <h2 className="text-4xl md:text-6xl lg:text-7xl font-black font-devanagari leading-tight text-white drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] tracking-tight">
             समाज की <span className="text-orange-400">ज्ञान संपदा</span>
           </h2>
-          <p className="text-white/80 max-w-lg mx-auto font-devanagari text-[10px] md:text-sm leading-relaxed font-bold px-4">
-            हमारी गौरवशाली विरासत और समाज के सभी प्रकाशनों को आधुनिक डिजिटल स्वरूप में अनुभव करें।
-          </p>
+          
+          <div className="flex flex-col items-center gap-3">
+            <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 bg-white/10 border border-white/20 rounded-full text-white text-[10px] md:text-xs font-black font-devanagari uppercase tracking-[0.3em] backdrop-blur-md">
+               <Sparkles size={14} className="text-orange-400" /> ज्ञानम् परमम् ध्येयम्
+            </div>
+            
+            <p className="text-white/90 max-w-xl mx-auto font-devanagari text-[11px] md:text-base leading-relaxed font-bold px-4">
+              हमारी गौरवशाली विरासत और समाज के सभी प्रकाशनों को आधुनिक डिजिटल स्वरूप में अनुभव करें।
+            </p>
+          </div>
         </div>
 
-        {/* Featured Section - Pulled up */}
-        <div className="container mx-auto px-4 md:px-6 relative z-10">
+        {/* Featured Section */}
+        <div className="container mx-auto px-4 md:px-6 relative z-10 mt-2">
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 max-w-4xl mx-auto">
               {featuredBooks.map((pub, idx) => (
-                <div key={pub.id} className="group relative bg-white/90 backdrop-blur-xl rounded-[1.2rem] md:rounded-[2rem] p-3 md:p-5 border border-white shadow-2xl flex flex-row items-center gap-4 md:gap-5 transition-all hover:translate-y-[-4px]">
+                <div key={pub.id} className="group relative bg-white/95 backdrop-blur-xl rounded-[1.2rem] md:rounded-[2rem] p-3 md:p-5 border border-white shadow-2xl flex flex-row items-center gap-4 md:gap-5 transition-all hover:translate-y-[-4px]">
                    <div className="relative shrink-0 w-20 md:w-28 aspect-[3/4.2] rounded-[0.8rem] md:rounded-[1rem] overflow-hidden shadow-xl ring-2 ring-white">
                       <img 
                         src={pub.cover_url || COVER_FALLBACK} 
@@ -200,7 +204,7 @@ const PublicShelf: React.FC = () => {
         </div>
       </header>
 
-      {/* Grid Area - Moved UP (Reduced spacing) */}
+      {/* Grid Area */}
       <main className="container mx-auto px-4 md:px-6 -mt-10 md:-mt-16 pb-20 space-y-6 md:space-y-10 relative z-20">
          <section className="bg-white/60 backdrop-blur-md p-5 md:p-8 rounded-[2rem] md:rounded-[3rem] border border-white/50 shadow-2xl">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-orange-100 pb-5 md:pb-6 mb-6 md:mb-8">
