@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, BookOpen, Smartphone, Info, Loader2, AlertCircle, X, Filter, Sparkles, ChevronRight, BookMarked, ArrowRight, Phone, Mail, MapPin, Link as LinkIcon, Facebook, Twitter, Instagram, Youtube, Code2, ExternalLink, Download } from 'lucide-react';
+import { Search, BookOpen, Smartphone, Info, Loader2, AlertCircle, X, Filter, Sparkles, ChevronRight, BookMarked, ArrowRight, Phone, Mail, MapPin, Link as LinkIcon, Facebook, Twitter, Instagram, Youtube, Code2, ExternalLink, Download, AppWindow } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase, convertDriveLink } from './lib/supabase.ts';
 import { Publication, Notice } from './types.ts';
@@ -24,22 +24,17 @@ const PublicShelf: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
-    // Check if on mobile to show install suggestion
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     
-    // Catch the PWA install prompt event
+    // PWA Install logic
     window.addEventListener('beforeinstallprompt', (e) => {
-      // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
-      // Stash the event so it can be triggered later.
       setDeferredPrompt(e);
-      // Show the banner because installation is possible
       setShowInstallBanner(true);
     });
 
     if (isMobile) {
       const bannerHidden = localStorage.getItem('hideInstallBanner');
-      // If prompt isn't supported/fired yet, we still show the banner if not hidden
       if (!bannerHidden) setShowInstallBanner(true);
     }
 
@@ -105,21 +100,17 @@ const PublicShelf: React.FC = () => {
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
-      // Show the system install prompt
       deferredPrompt.prompt();
-      // Wait for the user to respond to the prompt
       const { outcome } = await deferredPrompt.userChoice;
-      console.log(`User response to the install prompt: ${outcome}`);
-      // We've used the prompt, and can't use it again, throw it away
+      console.log(`User response: ${outcome}`);
       setDeferredPrompt(null);
       setShowInstallBanner(false);
     } else {
-      // Fallback for iOS or if event hasn't fired
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
       if (isIOS) {
         alert("आईफोन पर इंस्टॉल करने के लिए:\n1. नीचे 'Share' बटन दबाएं\n2. 'Add to Home Screen' चुनें।");
       } else {
-        alert("यह ऐप आपके फोन के लिए तैयार है। अगर सिस्टम प्रॉम्प्ट नहीं दिख रहा है, तो ब्राउज़र के 'Install App' विकल्प का उपयोग करें।");
+        alert("यह ऐप आपके फोन के लिए तैयार है। अगर आप क्रोम (Chrome) यूज कर रहे हैं, तो ऊपर दिए गए 'Install' विकल्प को चुनें।");
       }
     }
   };
@@ -130,7 +121,7 @@ const PublicShelf: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#fffcf5] selection:bg-orange-200 overflow-x-hidden pb-16 md:pb-0">
       
-      {/* SMART INSTALL BANNER */}
+      {/* 1. Mobile Smart Banner (Fixed at Bottom) */}
       {showInstallBanner && (
         <div className="fixed bottom-0 left-0 right-0 z-[100] p-4 animate-in slide-in-from-bottom duration-500 lg:hidden">
            <div className="bg-slate-900 text-white p-4 rounded-3xl shadow-2xl flex items-center justify-between border border-white/10 backdrop-blur-xl">
@@ -175,7 +166,7 @@ const PublicShelf: React.FC = () => {
         </div>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation - 2. Added Header Install Button */}
       <nav className="fixed top-12 left-0 right-0 p-4 md:p-8 flex items-center justify-between z-50">
         <div className="flex items-center gap-3 md:gap-5 bg-white/90 backdrop-blur-md px-3 md:px-6 py-2 md:py-3 rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl shadow-[#7f1d1d]/5 border border-white/50 ring-1 ring-[#7f1d1d]/5 max-w-[85vw]">
           <div className="w-10 h-10 md:w-16 md:h-16 bg-white rounded-xl md:rounded-3xl flex items-center justify-center shadow-md p-1.5 overflow-hidden shrink-0 border border-orange-100">
@@ -195,16 +186,26 @@ const PublicShelf: React.FC = () => {
              </p>
           </div>
         </div>
-        <Link 
-          to="/admin" 
-          className="bg-[#7f1d1d] text-white w-12 h-12 md:w-auto md:px-8 md:py-3 rounded-full md:rounded-2xl font-devanagari text-[10px] md:text-sm font-bold flex items-center justify-center shadow-2xl shadow-[#7f1d1d]/20 active:scale-95 transition-transform"
-        >
-          <Smartphone size={18} className="md:hidden" />
-          <span className="hidden md:inline">एडमिन पोर्टल</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* Top Install Button */}
+          <button 
+            onClick={handleInstallClick}
+            className="hidden md:flex items-center gap-2 bg-white/90 backdrop-blur-md text-orange-600 px-6 py-3 rounded-2xl font-devanagari text-sm font-black shadow-xl border border-orange-100 hover:bg-orange-50 transition-all active:scale-95"
+          >
+            <Smartphone size={18} />
+            <span>ऐप इंस्टॉल करें</span>
+          </button>
+          
+          <Link 
+            to="/admin" 
+            className="bg-[#7f1d1d] text-white w-12 h-12 md:w-auto md:px-8 md:py-3 rounded-full md:rounded-2xl font-devanagari text-[10px] md:text-sm font-bold flex items-center justify-center shadow-2xl shadow-[#7f1d1d]/20 active:scale-95 transition-transform"
+          >
+            <Smartphone size={18} className="md:hidden" />
+            <span className="hidden md:inline">एडमिन पोर्टल</span>
+          </Link>
+        </div>
       </nav>
 
-      {/* Hero Section */}
       <header className="relative min-h-[60vh] md:min-h-[75vh] flex flex-col items-center justify-start overflow-hidden pt-28 md:pt-36 pb-4 md:pb-8">
         <div className="absolute inset-0 z-0">
            <img 
@@ -218,8 +219,6 @@ const PublicShelf: React.FC = () => {
         </div>
 
         <div className="relative z-10 text-center space-y-3 md:space-y-4 px-6 mb-6 md:mb-10 w-full max-w-6xl mx-auto flex flex-col items-center">
-          
-          {/* HEADER QUICK LINKS */}
           <div className="mb-4 md:mb-8 flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full px-4">
              <div className="flex items-center gap-2 md:gap-4 p-1.5 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
                 {importantLinks.length > 0 ? importantLinks.map((link, i) => (
@@ -254,7 +253,6 @@ const PublicShelf: React.FC = () => {
           </div>
         </div>
 
-        {/* Featured Section */}
         <div className="container mx-auto px-4 md:px-6 relative z-10 mt-2">
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 max-w-4xl mx-auto">
               {featuredBooks.map((pub) => (
@@ -287,7 +285,6 @@ const PublicShelf: React.FC = () => {
         </div>
       </header>
 
-      {/* Grid Area */}
       <main className="container mx-auto px-4 md:px-6 -mt-10 md:-mt-16 pb-20 space-y-6 md:space-y-10 relative z-20">
          <section className="bg-white/70 backdrop-blur-md p-6 md:p-10 rounded-[2.5rem] md:rounded-[4rem] border border-white/50 shadow-2xl">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-orange-100 pb-6 md:pb-8 mb-8 md:mb-12">
@@ -309,7 +306,6 @@ const PublicShelf: React.FC = () => {
                </div>
             </div>
 
-            {/* Book Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-x-6 gap-y-10 md:gap-y-16">
                {filteredPubs.map((pub) => (
                  <a key={pub.id} href={pub.flipbook_url} target="_blank" rel="noreferrer" className="group block text-center">
@@ -341,14 +337,13 @@ const PublicShelf: React.FC = () => {
          </section>
       </main>
 
-      {/* FOOTER */}
+      {/* FOOTER - 3. Added Install Button in Footer Sidebar */}
       <footer className="bg-[#1a0505] text-white pt-20 pb-10 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-30"></div>
         <div className="absolute bottom-0 right-0 w-64 h-64 bg-orange-900/10 rounded-full blur-3xl -mb-32 -mr-32"></div>
 
         <div className="container mx-auto px-6 relative z-10">
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16 mb-12 text-left">
-              
               <div className="space-y-8">
                  <div className="flex items-center gap-4">
                     <div className="w-20 h-20 bg-white rounded-2xl p-2 shadow-2xl ring-4 ring-white/10">
@@ -384,8 +379,8 @@ const PublicShelf: React.FC = () => {
                       </li>
                     )) : (
                       <>
-                        <li><a href="#" className="text-white/60 hover:text-orange-400 transition-all font-bold flex items-center gap-2"><ChevronRight size={16} /> मुख्य पृष्ठ</a></li>
-                        <li><a href="#" className="text-white/60 hover:text-orange-400 transition-all font-bold flex items-center gap-2"><ChevronRight size={16} /> सभा के बारे में</a></li>
+                        <li><a href="#" className="text-white/60 hover:text-orange-400 font-bold flex items-center gap-2"><ChevronRight size={16} /> मुख्य पृष्ठ</a></li>
+                        <li><a href="#" className="text-white/60 hover:text-orange-400 font-bold flex items-center gap-2"><ChevronRight size={16} /> सभा के बारे में</a></li>
                       </>
                     )}
                  </ul>
@@ -413,22 +408,31 @@ const PublicShelf: React.FC = () => {
                  </div>
               </div>
 
-              <div className="space-y-8 bg-white/5 p-10 rounded-[2.5rem] border border-white/5 backdrop-blur-sm shadow-2xl">
+              <div className="space-y-6 bg-white/5 p-8 rounded-[2.5rem] border border-white/5 backdrop-blur-sm shadow-2xl">
                  <h6 className="text-lg font-black font-devanagari uppercase tracking-[0.2em] text-white">डिजिटल सहायता</h6>
-                 <p className="text-xs md:text-sm font-devanagari text-white/60 leading-relaxed font-black">
-                    वेबसाइट या पब्लिकेशन से संबंधित किसी भी समस्या के लिए हमें संदेश भेजें।
-                 </p>
-                 <a href={`https://wa.me/91${settings.footer_whatsapp || "9039363610"}`} className="flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 text-white font-black font-devanagari py-5 rounded-2xl text-base md:text-lg shadow-2xl transition-all active:scale-95">
-                    व्हाट्सएप पर जुड़ें
-                 </a>
+                 
+                 <div className="space-y-3">
+                    <a href={`https://wa.me/91${settings.footer_whatsapp || "9039363610"}`} className="flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 text-white font-black font-devanagari py-4 rounded-2xl text-sm md:text-base shadow-2xl transition-all active:scale-95">
+                       व्हाट्सएप पर जुड़ें
+                    </a>
+                    
+                    {/* Explicit App Install Button */}
+                    <button 
+                      onClick={handleInstallClick}
+                      className="w-full flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 text-white border border-white/10 font-black font-devanagari py-4 rounded-2xl text-sm md:text-base transition-all active:scale-95"
+                    >
+                       <AppWindow size={18} className="text-orange-500" />
+                       ऐप इंस्टॉल करें
+                    </button>
+                 </div>
               </div>
            </div>
 
-           {/* Developer Credit Block - Restored and Styled */}
-           <div className="mb-10 p-4 md:p-6 bg-white/5 rounded-2xl border border-white/10 text-center shadow-sm group hover:border-orange-500/30 transition-all duration-300">
+           {/* Main Developer Credit - Cleaned and Styled */}
+           <div className="mb-8 p-4 md:p-6 bg-white/5 rounded-2xl border border-white/10 text-center shadow-sm">
               <p className="text-white font-devanagari text-sm md:text-base flex flex-col md:flex-row items-center justify-center gap-1 md:gap-3">
                  <span className="text-slate-400 font-semibold italic">एप्लीकेशन डिजाइन & डेवलप by</span>
-                 <span className="text-orange-500 font-black tracking-wide drop-shadow-sm">
+                 <span className="text-orange-500 font-black tracking-wide">
                    पीयूष कुमार जगदीश चन्द्र भंसाली
                  </span>
               </p>
