@@ -16,8 +16,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const logVisit = async () => {
       try {
-        // Only attempt to log if supabase is properly configured
-        if (supabase) {
+        if (supabase && supabase.from) {
           await supabase.from('analytics').insert({
             device: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
             platform: navigator.userAgent.split(' ')[0],
@@ -25,7 +24,7 @@ const App: React.FC = () => {
           });
         }
       } catch (err) {
-        console.warn("Analytics logging skipped or failed:", err);
+        console.warn("Analytics logging skipped:", err);
       }
     };
     logVisit();

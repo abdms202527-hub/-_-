@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, BookOpen, Smartphone, Info, Loader2, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { supabase } from './lib/supabase';
-import { Publication, Notice } from './types';
+import { supabase } from './lib/supabase.ts';
+import { Publication, Notice } from './types.ts';
 
 const PublicShelf: React.FC = () => {
   const [search, setSearch] = useState('');
@@ -22,7 +22,7 @@ const PublicShelf: React.FC = () => {
         setLoading(true);
         setError(null);
         
-        // Parallel fetching for performance
+        // Parallel fetching
         const [pubRes, noticeRes, settingsRes] = await Promise.all([
           supabase.from('publications').select('*').order('created_at', { ascending: false }),
           supabase.from('notices').select('*').eq('active', true),
@@ -42,7 +42,6 @@ const PublicShelf: React.FC = () => {
         setSettings(settingsMap);
       } catch (err: any) {
         console.error("Data fetch error:", err);
-        // Error state to inform user instead of blank screen
         setError("डेटा लोड करने में समस्या आई। कृपया रिफ्रेश करें या इंटरनेट चेक करें।");
       } finally {
         setLoading(false);
@@ -62,7 +61,6 @@ const PublicShelf: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f1f5f9]">
-      {/* Moving Ticker */}
       <div className="bg-slate-900 text-white py-3 overflow-hidden border-b border-slate-800">
         <div className="flex items-center gap-6 animate-marquee whitespace-nowrap">
            <span className="flex items-center gap-2 font-devanagari text-sm text-blue-400 font-bold">

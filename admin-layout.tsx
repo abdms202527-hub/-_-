@@ -2,7 +2,7 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
-import { ADMIN_SIDEBAR_LINKS } from './constants';
+import { ADMIN_SIDEBAR_LINKS } from './constants.tsx';
 
 const AdminLayout: React.FC = () => {
   const location = useLocation();
