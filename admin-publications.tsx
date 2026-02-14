@@ -9,14 +9,23 @@ const AdminPublications: React.FC = () => {
   const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>(['पत्रिका', 'विशेषांक']);
 
   const fetchPubs = async () => {
     try {
       setLoading(true);
       setError(null);
-      const { data, error } = await supabase.from('publications').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
-      setPublications(data || []);
+      const [pubRes, settingsRes] = await Promise.all([
+        supabase.from('publications').select('*').order('created_at', { ascending: false }),
+        supabase.from('site_settings').select('value').eq('key', 'publication_categories').single()
+      ]);
+
+      if (pubRes.error) throw pubRes.error;
+      setPublications(pubRes.data || []);
+      
+      if (settingsRes.data && settingsRes.data.value) {
+        setCategories(JSON.parse(settingsRes.data.value));
+      }
     } catch (err: any) {
       console.error("Fetch Error:", err);
       setError("डेटा लोड करने में विफल: " + (err.message || "Network Error"));
@@ -43,6 +52,11 @@ const AdminPublications: React.FC = () => {
   const handleAdd = async () => {
     const title = prompt("पत्रिका का शीर्षक:");
     if (!title) return;
+    
+    // Dynamic category choice
+    const catChoice = prompt(`श्रेणी चुनें या नई टाइप करें:\n(${categories.join(', ')})`, categories[0] || 'पत्रिका');
+    if (!catChoice) return;
+
     const url = prompt("Flipbook URL (e.g., https://online.anyflip.com/...):");
     if (!url) return;
     const cover = prompt("कवर इमेज URL (वैकल्पिक):");
@@ -52,7 +66,7 @@ const AdminPublications: React.FC = () => {
         title,
         flipbook_url: url,
         cover_url: cover || '',
-        category: 'पत्रिका',
+        category: catChoice,
         year: new Date().getFullYear().toString(),
         is_latest: true
       });
@@ -145,7 +159,7 @@ const AdminPublications: React.FC = () => {
                         <span className="bg-green-100 text-green-600 text-[10px] px-2 py-1 rounded-lg font-black font-devanagari uppercase tracking-widest">नवीनतम</span>
                       )}
                     </div>
-                    <p className="text-sm text-slate-400 font-devanagari mt-1">{p.category} (MAGAZINE) • {p.year} विशेषांक</p>
+                    <p className="text-sm text-slate-400 font-devanagari mt-1">{p.category} • {p.year}</p>
                   </td>
                   <td className="px-8 py-6 text-center">
                      <a 
@@ -159,9 +173,6 @@ const AdminPublications: React.FC = () => {
                   </td>
                   <td className="px-8 py-6 text-right">
                     <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-all">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                      </button>
                       <button 
                         className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all" 
                         onClick={() => handleDelete(p.id)}

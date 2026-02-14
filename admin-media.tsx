@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Image as ImageIcon, Trash2, Loader2, AlertCircle, Plus, Camera, Search } from 'lucide-react';
+import { Image as ImageIcon, Trash2, Loader2, AlertCircle, Plus, Camera, Check, Star, Sparkles } from 'lucide-react';
 import { supabase } from './lib/supabase.ts';
 
 interface MediaItem {
@@ -15,14 +15,25 @@ const AdminMedia: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [activeBgUrl, setActiveBgUrl] = useState<string | null>(null);
 
   const fetchMedia = async () => {
     try {
       setLoading(true);
       setError(null);
-      const { data, error } = await supabase.from('media').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
-      setMedia(data || []);
+      
+      // Fetch media and site settings to know current background
+      const [mediaRes, settingsRes] = await Promise.all([
+        supabase.from('media').select('*').order('created_at', { ascending: false }),
+        supabase.from('site_settings').select('*').eq('key', 'divine_bg_url').single()
+      ]);
+
+      if (mediaRes.error) throw mediaRes.error;
+      setMedia(mediaRes.data || []);
+      
+      if (settingsRes.data) {
+        setActiveBgUrl(settingsRes.data.value);
+      }
     } catch (err: any) {
       console.error("Media Fetch Error:", err);
       setError("मीडिया लोड करने में विफल: " + (err.message || "Failed to fetch"));
@@ -67,6 +78,25 @@ const AdminMedia: React.FC = () => {
     }
   };
 
+  const handleSetAsBackground = async (url: string) => {
+    try {
+      setSaving(true);
+      const { error } = await supabase.from('site_settings').upsert({
+        key: 'divine_bg_url',
+        value: url,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'key' });
+
+      if (error) throw error;
+      setActiveBgUrl(url);
+      alert("होम पेज बैकग्राउंड सफलतापूर्वक अपडेट कर दिया गया है!");
+    } catch (err: any) {
+      alert("सेटिंग अपडेट करने में त्रुटि: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -79,7 +109,7 @@ const AdminMedia: React.FC = () => {
         <button 
           onClick={handleAddImage}
           disabled={saving}
-          className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-[1.5rem] font-bold font-devanagari flex items-center gap-2 shadow-xl shadow-orange-100 transition-all active:scale-95 disabled:opacity-50 group"
+          className="bg-[#991b1b] hover:bg-red-800 text-white px-8 py-4 rounded-[1.5rem] font-bold font-devanagari flex items-center gap-2 shadow-xl shadow-red-100 transition-all active:scale-95 disabled:opacity-50 group border border-red-900/10"
         >
           <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center group-hover:rotate-12 transition-transform">
             <Plus size={20} />
@@ -96,11 +126,18 @@ const AdminMedia: React.FC = () => {
       )}
 
       <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-10 min-h-[500px] flex flex-col relative overflow-hidden">
-         <div className="absolute top-0 left-0 w-64 h-64 bg-slate-50 rounded-full blur-[100px] -ml-32 -mt-32"></div>
+         <div className="absolute top-0 left-0 w-64 h-64 bg-red-50 rounded-full blur-[100px] -ml-32 -mt-32 opacity-40"></div>
          
-         <div className="flex flex-col gap-2 mb-10 relative z-10">
-            <h3 className="text-2xl font-black text-slate-800 font-devanagari tracking-tight">मीडिया लाइब्रेरी</h3>
-            <p className="text-slate-400 font-devanagari text-base">वेबसाइट के लिए सभी चित्र यहाँ प्रबंधित करें</p>
+         <div className="flex items-center justify-between mb-10 relative z-10">
+            <div>
+              <h3 className="text-2xl font-black text-slate-800 font-devanagari tracking-tight">मीडिया लाइब्रेरी</h3>
+              <p className="text-slate-400 font-devanagari text-base">वेबसाइट के लिए सभी चित्र यहाँ प्रबंधित करें</p>
+            </div>
+            {saving && (
+              <div className="flex items-center gap-2 text-blue-600 font-devanagari text-sm font-bold bg-blue-50 px-4 py-2 rounded-xl animate-pulse">
+                <Loader2 className="animate-spin" size={16} /> अपडेट हो रहा है...
+              </div>
+            )}
          </div>
 
          {loading ? (
@@ -112,26 +149,54 @@ const AdminMedia: React.FC = () => {
               <p className="font-devanagari text-lg animate-pulse">गैलरी लोड हो रही है...</p>
            </div>
          ) : media.length > 0 ? (
-           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-8 relative z-10">
-              {media.map((item) => (
-                <div key={item.id} className="group relative aspect-square bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm transition-all hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-2 duration-500">
-                   <img 
-                    src={item.url} 
-                    alt={item.title} 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/200?text=Invalid+URL'; }}
-                   />
-                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-4">
-                      <button 
-                        onClick={() => handleDelete(item.id)}
-                        className="bg-red-500 w-12 h-12 rounded-2xl text-white hover:bg-red-600 shadow-xl transition-all active:scale-90 flex items-center justify-center hover:rotate-6"
-                      >
-                        <Trash2 size={22} />
-                      </button>
-                      <p className="text-[10px] text-white/70 font-devanagari uppercase tracking-widest font-black px-4 text-center">{item.title}</p>
-                   </div>
-                </div>
-              ))}
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 relative z-10">
+              {media.map((item) => {
+                const isActive = activeBgUrl === item.url;
+                return (
+                  <div key={item.id} className={`group relative bg-white rounded-[2.5rem] overflow-hidden border-2 transition-all hover:shadow-2xl duration-500 ${isActive ? 'border-orange-400 ring-4 ring-orange-500/10' : 'border-slate-100'}`}>
+                    <div className="aspect-[4/3] relative">
+                      <img 
+                        src={item.url} 
+                        alt={item.title} 
+                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                        onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x300?text=Invalid+Image'; }}
+                      />
+                      {isActive && (
+                        <div className="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-lg text-[10px] font-black font-devanagari uppercase tracking-widest flex items-center gap-1 shadow-lg">
+                           <Star size={10} fill="currentColor" /> सक्रिय बैकग्राउंड
+                        </div>
+                      )}
+                      
+                      {/* Hover Actions Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-4">
+                        <div className="flex gap-3">
+                          <button 
+                            onClick={() => handleSetAsBackground(item.url)}
+                            title="Set as Hero Background"
+                            className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all active:scale-90 ${isActive ? 'bg-orange-500 text-white cursor-default' : 'bg-white text-[#991b1b] hover:bg-orange-50'}`}
+                          >
+                            <Sparkles size={24} />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(item.id)}
+                            className="bg-white/10 backdrop-blur-md w-14 h-14 rounded-2xl text-white hover:bg-red-600 transition-all active:scale-90 flex items-center justify-center border border-white/20"
+                          >
+                            <Trash2 size={24} />
+                          </button>
+                        </div>
+                        {!isActive && <p className="text-[10px] text-white/70 font-devanagari font-black uppercase tracking-widest">बैकग्राउंड सेट करें</p>}
+                      </div>
+                    </div>
+                    <div className="p-5 flex items-center justify-between">
+                      <div className="truncate pr-4">
+                        <p className="text-xs font-black text-slate-800 font-devanagari truncate">{item.title}</p>
+                        <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{new Date(item.created_at).toLocaleDateString()}</p>
+                      </div>
+                      <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-orange-500 shadow-lg shadow-orange-500/50' : 'bg-slate-100'}`}></div>
+                    </div>
+                  </div>
+                );
+              })}
            </div>
          ) : (
            <div className="flex-1 flex flex-col items-center justify-center text-slate-300 py-12 gap-6 relative z-10">

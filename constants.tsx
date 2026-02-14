@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { LayoutDashboard, BookOpen, Image as ImageIcon, Bell, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Image as ImageIcon, Bell, Settings, Link2 } from 'lucide-react';
 
 export const ADMIN_SIDEBAR_LINKS = [
   { label: 'डैशबोर्ड (एनालिटिक्स)', icon: <LayoutDashboard size={20} />, path: '/admin' },
   { label: 'प्रकाशन प्रबंधन', icon: <BookOpen size={20} />, path: '/admin/publications' },
+  { label: 'लिंक प्रबंधन', icon: <Link2 size={20} />, path: '/admin/links' },
   { label: 'मीडिया गैलरी', icon: <ImageIcon size={20} />, path: '/admin/media' },
   { label: 'सूचना (NOTICES)', icon: <Bell size={20} />, path: '/admin/notices' },
   { label: 'वेबसाइट सेटिंग्स', icon: <Settings size={20} />, path: '/admin/settings' },
