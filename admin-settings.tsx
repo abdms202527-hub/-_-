@@ -1,21 +1,68 @@
 
-import React from 'react';
-/* Added Image as ImageIcon and Settings to imports */
-import { Save, Smartphone, Palette, Globe, Phone, Image as ImageIcon, Settings } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Save, Smartphone, Palette, Globe, Phone, Image as ImageIcon, Settings, Loader2 } from 'lucide-react';
+import { supabase } from './lib/supabase';
 
 const AdminSettings: React.FC = () => {
+  const [settings, setSettings] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      setLoading(true);
+      const { data } = await supabase.from('site_settings').select('*');
+      if (data) {
+        const map = data.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {});
+        setSettings(map);
+      }
+      setLoading(false);
+    };
+    fetchSettings();
+  }, []);
+
+  const handleChange = (key: string, value: string) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    const updates = Object.entries(settings).map(([key, value]) => ({
+      key,
+      value,
+      updated_at: new Date().toISOString()
+    }));
+
+    // Upsert all settings
+    const { error } = await supabase.from('site_settings').upsert(updates, { onConflict: 'key' });
+    setSaving(false);
+
+    if (!error) {
+      alert("सेटिंग्स सफलतापूर्वक अपडेट कर दी गई हैं!");
+    } else {
+      alert("Error: " + error.message);
+    }
+  };
+
+  if (loading) {
+    return <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" /></div>;
+  }
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-slate-800 font-devanagari">वेबसाइट सेटिंग्स</h1>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-2xl font-bold font-devanagari flex items-center gap-2 shadow-xl shadow-blue-200 transition-all active:scale-95">
-          <Save size={20} />
+        <button 
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-2xl font-bold font-devanagari flex items-center gap-2 shadow-xl shadow-blue-200 transition-all active:scale-95 disabled:opacity-50"
+        >
+          {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
           सभी सेटिंग्स अपडेट करें
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Mobile Sync */}
         <div className="bg-orange-50 p-8 rounded-[2rem] border border-orange-100 flex flex-col items-center text-center">
            <div className="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center text-white mb-4">
               <Smartphone size={24} />
@@ -29,36 +76,26 @@ const AdminSettings: React.FC = () => {
            </button>
         </div>
 
-        {/* Logo & Branding */}
         <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
           <div className="flex items-center gap-3 mb-6">
              <Palette className="text-blue-600" size={20} />
              <h3 className="text-lg font-bold text-slate-800 font-devanagari">लोगो और ब्रांडिंग</h3>
           </div>
           <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-devanagari text-slate-400 mb-1.5 ml-1">मुख्य लोगो URL</label>
-              <div className="relative">
-                <input 
-                  type="text" 
-                  defaultValue="https://lh3.googleusercontent.com/d/18z4-1b-Auds2eOsFG"
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono text-xs pr-10"
-                />
-                <ImageIcon className="absolute right-3 top-3 text-slate-300" size={18} />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-devanagari text-slate-400 mb-1.5 ml-1">मुख्य हेडलाइन (TITLE)</label>
-              <input 
-                type="text" 
-                defaultValue="समाज की ज्ञान संपदा, अब आपके हाथ में"
-                className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-devanagari"
-              />
-            </div>
+            <SettingsField 
+              label="मुख्य लोगो URL" 
+              value={settings.logo_url || ''} 
+              onChange={(v) => handleChange('logo_url', v)} 
+              icon={<ImageIcon size={18} />}
+            />
+            <SettingsField 
+              label="मुख्य हेडलाइन (TITLE)" 
+              value={settings.headline || ''} 
+              onChange={(v) => handleChange('headline', v)} 
+            />
           </div>
         </div>
 
-        {/* Text Content */}
         <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-6">
            <div className="flex items-center gap-3">
              <Globe className="text-blue-600" size={20} />
@@ -69,20 +106,17 @@ const AdminSettings: React.FC = () => {
               <textarea 
                 rows={4}
                 className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-devanagari resize-none"
-                defaultValue="हमारी डिजिटल लाइब्रेरी पर समाज के सभी गौरवशाली प्रकाशनों को पढ़ना शुरू करें।"
+                value={settings.hero_description || ''}
+                onChange={(e) => handleChange('hero_description', e.target.value)}
               />
            </div>
-           <div>
-              <label className="block text-xs font-devanagari text-slate-400 mb-1.5 ml-1">'हमारे बारे में' फुटर टेक्स्ट</label>
-              <input 
-                type="text"
-                className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-devanagari"
-                defaultValue="अपने समाज का विशेष विशेषांक।"
-              />
-           </div>
+           <SettingsField 
+              label="'हमारे बारे में' फुटर टेक्स्ट" 
+              value={settings.footer_about || ''} 
+              onChange={(v) => handleChange('footer_about', v)} 
+           />
         </div>
 
-        {/* Divine Background & Contact */}
         <div className="space-y-8">
            <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
               <div className="flex items-center gap-3 mb-6">
@@ -90,8 +124,8 @@ const AdminSettings: React.FC = () => {
                 <h3 className="text-lg font-bold text-slate-800 font-devanagari">दिव्य चित्र एवं पृष्ठभूमि</h3>
               </div>
               <div className="space-y-4">
-                <SettingsInput label="बैकग्राउंड पैटर्न URL" value="https://lh3.googleusercontent.com/..." />
-                <SettingsInput label="श्रीनाथजी / दिव्य विग्रह URL" value="https://lh3.googleusercontent.com/..." />
+                <SettingsField label="बैकग्राउंड पैटर्न URL" value={settings.bg_pattern || ''} onChange={(v) => handleChange('bg_pattern', v)} />
+                <SettingsField label="श्रीनाथजी / दिव्य विग्रह URL" value={settings.divine_img || ''} onChange={(v) => handleChange('divine_img', v)} />
               </div>
            </div>
 
@@ -101,8 +135,8 @@ const AdminSettings: React.FC = () => {
                 <h3 className="text-lg font-bold text-slate-800 font-devanagari">संपर्क एवं फुटर सेटिंग्स</h3>
               </div>
               <div className="space-y-4">
-                <SettingsInput label="संपर्क जानकारी (CONTACT INFO)" value="अधिक जानकारी के लिए संपर्क | +91 9039363610" />
-                <SettingsInput label="फुटर कॉपीराइट टेक्स्ट" value="© 2025-27 डिजिटल लाइब्रेरी। सर्वाधिकार सुरक्षित।" />
+                <SettingsField label="संपर्क जानकारी (CONTACT INFO)" value={settings.contact_info || ''} onChange={(v) => handleChange('contact_info', v)} />
+                <SettingsField label="फुटर कॉपीराइट टेक्स्ट" value={settings.footer_copyright || ''} onChange={(v) => handleChange('footer_copyright', v)} />
               </div>
            </div>
         </div>
@@ -111,17 +145,19 @@ const AdminSettings: React.FC = () => {
   );
 };
 
-const SettingsInput = ({ label, value }: { label: string, value: string }) => (
+const SettingsField = ({ label, value, onChange, icon }: { label: string, value: string, onChange: (v: string) => void, icon?: React.ReactNode }) => (
   <div>
     <label className="block text-xs font-devanagari text-slate-400 mb-1.5 ml-1">{label}</label>
     <div className="relative group">
       <input 
         type="text" 
-        defaultValue={value}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-devanagari pr-10"
       />
-      {/* Fixed Settings component being missing */}
-      <Settings className="absolute right-3 top-3 text-slate-300 group-focus-within:text-blue-400 transition-colors" size={18} />
+      <div className="absolute right-3 top-3 text-slate-300 group-focus-within:text-blue-400 transition-colors">
+        {icon || <Settings size={18} />}
+      </div>
     </div>
   </div>
 );

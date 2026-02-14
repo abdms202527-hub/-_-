@@ -1,31 +1,101 @@
 
-import React from 'react';
-import { Users, Zap, Book, Star } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Users, Zap, Book, Star, Loader2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-
-const MOCK_TRENDS = Array.from({ length: 30 }, (_, i) => ({
-  date: `${i + 1} फ़र`,
-  count: Math.floor(Math.random() * 50) + 20,
-}));
-
-const MOCK_DEVICES = [
-  { name: 'डेस्कटॉप', value: 65, color: '#2563eb' },
-  { name: 'मोबाइल', value: 35, color: '#f97316' },
-];
+import { supabase } from './lib/supabase';
 
 const AdminDashboard: React.FC = () => {
+  const [stats, setStats] = useState({
+    totalVisitors: 0,
+    todayVisits: 0,
+    totalPublications: 0,
+    popularMagazine: 'N/A'
+  });
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        // 1. Total Publications
+        const pubCount = await supabase.from('publications').select('*', { count: 'exact', head: true });
+        
+        // 2. Total Visitors
+        const visCount = await supabase.from('analytics').select('*', { count: 'exact', head: true });
+        
+        // 3. Today Visits
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayCount = await supabase.from('analytics')
+          .select('*', { count: 'exact', head: true })
+          .gte('created_at', today.toISOString());
+
+        // 4. Live Logs
+        const { data: recentLogs } = await supabase.from('analytics')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        setStats({
+          totalVisitors: visCount.count || 0,
+          todayVisits: todayCount.count || 0,
+          totalPublications: pubCount.count || 0,
+          popularMagazine: 'शुभ शगुन'
+        });
+
+        if (recentLogs) setLogs(recentLogs);
+      } catch (err) {
+        console.error("Dashboard load error", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+
+    // Subscribe to live logs
+    const channel = supabase.channel('analytics-changes')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'analytics' }, (payload) => {
+        setLogs(prev => [payload.new, ...prev.slice(0, 9)]);
+        setStats(prev => ({ ...prev, totalVisitors: prev.totalVisitors + 1, todayVisits: prev.todayVisits + 1 }));
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const MOCK_TRENDS = Array.from({ length: 30 }, (_, i) => ({
+    date: `${i + 1} फ़र`,
+    count: Math.floor(Math.random() * 50) + 20,
+  }));
+
+  const MOCK_DEVICES = [
+    { name: 'डेस्कटॉप', value: 65, color: '#2563eb' },
+    { name: 'मोबाइल', value: 35, color: '#f97316' },
+  ];
+
+  if (loading) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-4">
+        <Loader2 className="animate-spin text-blue-600" size={48} />
+        <p className="font-devanagari">डैशबोर्ड लोड हो रहा है...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Top Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon={<Users className="text-blue-600" />} label="कुल आगंतुक" value="2450" />
-        <StatCard icon={<Zap className="text-orange-500" />} label="आज के विजिट" value="42" />
-        <StatCard icon={<Book className="text-purple-500" />} label="कृत प्रकाशन" value="12" />
-        <StatCard icon={<Star className="text-yellow-500" />} label="लोकप्रिय पत्रिका" value="शुभ शगुन" subValue="समाज की..." />
+        <StatCard icon={<Users className="text-blue-600" />} label="कुल आगंतुक" value={stats.totalVisitors.toString()} />
+        <StatCard icon={<Zap className="text-orange-500" />} label="आज के विजिट" value={stats.todayVisits.toString()} />
+        <StatCard icon={<Book className="text-purple-500" />} label="कृत प्रकाशन" value={stats.totalPublications.toString()} />
+        <StatCard icon={<Star className="text-yellow-500" />} label="लोकप्रिय पत्रिका" value={stats.popularMagazine} subValue="समाज की..." />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Visitor Trends Line Chart */}
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-slate-800 font-devanagari">विज़िटर ट्रेंड्स (30 दिन)</h3>
@@ -45,7 +115,6 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Device Distribution Donut */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
           <h3 className="text-lg font-bold text-slate-800 font-devanagari mb-6">डिवाइस डिस्ट्रीब्यूशन</h3>
           <div className="h-64 relative">
@@ -80,7 +149,6 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Live Visitor Log */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-lg font-bold text-slate-800 font-devanagari">लाइव विज़िटर लॉग</h3>
@@ -92,19 +160,24 @@ const AdminDashboard: React.FC = () => {
               <tr>
                 <th className="px-6 py-4">समय</th>
                 <th className="px-6 py-4">डिवाइस</th>
-                <th className="px-6 py-4">टोकन</th>
                 <th className="px-6 py-4">प्लेटफ़ॉर्म</th>
+                <th className="px-6 py-4">पाथ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600 text-sm">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4">12:4{i} PM</td>
-                  <td className="px-6 py-4">Windows Desktop</td>
-                  <td className="px-6 py-4 text-xs font-mono">tk_8723...{i}</td>
-                  <td className="px-6 py-4">Chrome 122.0</td>
+              {logs.map((log) => (
+                <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-6 py-4">{new Date(log.created_at).toLocaleTimeString()}</td>
+                  <td className="px-6 py-4">{log.device}</td>
+                  <td className="px-6 py-4">{log.platform}</td>
+                  <td className="px-6 py-4 font-mono text-[10px]">{log.path}</td>
                 </tr>
               ))}
+              {logs.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-6 py-10 text-center text-slate-400 font-devanagari">कोई लॉग नहीं मिला।</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -113,6 +186,7 @@ const AdminDashboard: React.FC = () => {
   );
 };
 
+// Defined StatCardProps interface to fix missing name error
 interface StatCardProps {
   icon: React.ReactNode;
   label: string;
@@ -120,7 +194,7 @@ interface StatCardProps {
   subValue?: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ icon, label, value, subValue }) => (
+const StatCard = ({ icon, label, value, subValue }: StatCardProps) => (
   <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5">
     <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center">
       {icon}

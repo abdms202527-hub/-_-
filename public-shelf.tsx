@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, BookOpen, Smartphone, Info, Loader2 } from 'lucide-react';
+import { Search, BookOpen, Smartphone, Info, Loader2, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { Publication, Notice } from './types';
@@ -11,44 +11,58 @@ const PublicShelf: React.FC = () => {
   const [publications, setPublications] = useState<Publication[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState<any>({});
 
   const categories = ['सभी', 'पत्रिका', 'विशेषांक', 'स्मृति लेख', 'कार्यकारिणी'];
 
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
-      
-      const [pubRes, noticeRes, settingsRes] = await Promise.all([
-        supabase.from('publications').select('*').order('created_at', { ascending: false }),
-        supabase.from('notices').select('*').eq('active', true),
-        supabase.from('site_settings').select('*')
-      ]);
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Parallel fetching for performance
+        const [pubRes, noticeRes, settingsRes] = await Promise.all([
+          supabase.from('publications').select('*').order('created_at', { ascending: false }),
+          supabase.from('notices').select('*').eq('active', true),
+          supabase.from('site_settings').select('*')
+        ]);
 
-      if (pubRes.data) setPublications(pubRes.data);
-      if (noticeRes.data) setNotices(noticeRes.data);
-      
-      const settingsMap = (settingsRes.data || []).reduce((acc: any, curr: any) => {
-        acc[curr.key] = curr.value;
-        return acc;
-      }, {});
-      setSettings(settingsMap);
-      
-      setLoading(false);
+        if (pubRes.error) throw pubRes.error;
+        if (noticeRes.error) throw noticeRes.error;
+
+        if (pubRes.data) setPublications(pubRes.data);
+        if (noticeRes.data) setNotices(noticeRes.data);
+        
+        const settingsMap = (settingsRes.data || []).reduce((acc: any, curr: any) => {
+          acc[curr.key] = curr.value;
+          return acc;
+        }, {});
+        setSettings(settingsMap);
+      } catch (err: any) {
+        console.error("Data fetch error:", err);
+        // Error state to inform user instead of blank screen
+        setError("डेटा लोड करने में समस्या आई। कृपया रिफ्रेश करें या इंटरनेट चेक करें।");
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
   }, []);
 
   const filteredPubs = publications.filter(p => {
-    const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase());
+    const titleMatch = (p.title || '').toLowerCase().includes(search.toLowerCase());
+    const yearMatch = (p.year || '').toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = titleMatch || yearMatch;
     const matchesCat = category === 'सभी' || p.category === category;
     return matchesSearch && matchesCat;
   });
 
   return (
     <div className="min-h-screen bg-[#f1f5f9]">
-      {/* Ticker */}
+      {/* Moving Ticker */}
       <div className="bg-slate-900 text-white py-3 overflow-hidden border-b border-slate-800">
         <div className="flex items-center gap-6 animate-marquee whitespace-nowrap">
            <span className="flex items-center gap-2 font-devanagari text-sm text-blue-400 font-bold">
@@ -82,6 +96,15 @@ const PublicShelf: React.FC = () => {
         </div>
       </header>
 
+      {error && (
+        <div className="bg-red-50 border-b border-red-100 p-4">
+          <div className="container mx-auto flex items-center gap-3 text-red-600 font-devanagari text-sm">
+            <AlertCircle size={18} />
+            <p>{error}</p>
+          </div>
+        </div>
+      )}
+
       <section className="bg-white py-12 border-b border-slate-100">
          <div className="container mx-auto px-4 text-center space-y-6">
             <h2 className="text-4xl md:text-5xl font-black text-slate-800 font-devanagari">
@@ -110,7 +133,7 @@ const PublicShelf: React.FC = () => {
                 key={cat}
                 onClick={() => setCategory(cat)}
                 className={`px-6 py-2 rounded-full font-devanagari text-sm whitespace-nowrap transition-all ${
-                  category === cat ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-500 border border-slate-200'
+                  category === cat ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-500 border border-slate-200 hover:border-blue-300'
                 }`}
               >
                 {cat}
@@ -119,16 +142,23 @@ const PublicShelf: React.FC = () => {
          </div>
 
          {loading ? (
-           <div className="h-64 flex flex-col items-center justify-center text-slate-400 gap-4">
-             <Loader2 className="animate-spin" size={40} />
-             <p className="font-devanagari">पत्रिकाएं लोड हो रही हैं...</p>
+           <div className="h-96 flex flex-col items-center justify-center text-slate-400 gap-4">
+             <Loader2 className="animate-spin text-blue-600" size={48} />
+             <p className="font-devanagari animate-pulse">डेटा लोड हो रहा है...</p>
            </div>
          ) : (
            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8 mt-8">
               {filteredPubs.map((pub) => (
                 <a key={pub.id} href={pub.flipbook_url} target="_blank" rel="noreferrer" className="group cursor-pointer">
                    <div className="relative aspect-[3/4] rounded-xl overflow-hidden shadow-xl group-hover:-translate-y-2 transition-transform duration-500 border-4 border-white">
-                      <img src={pub.cover_url || 'https://via.placeholder.com/400x533?text=No+Cover'} alt={pub.title} className="w-full h-full object-cover" />
+                      <img 
+                        src={pub.cover_url || 'https://via.placeholder.com/400x533?text=No+Cover'} 
+                        alt={pub.title} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x533?text=Cover+Not+Found';
+                        }}
+                      />
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                          <span className="bg-white text-blue-600 font-bold py-2 rounded-lg text-sm text-center font-devanagari shadow-lg">अभी पढ़ें</span>
                       </div>
@@ -137,12 +167,17 @@ const PublicShelf: React.FC = () => {
                       )}
                    </div>
                    <div className="mt-4 space-y-1">
-                      <h3 className="font-bold text-slate-800 font-devanagari text-sm line-clamp-1">{pub.title}</h3>
+                      <h3 className="font-bold text-slate-800 font-devanagari text-sm line-clamp-1 group-hover:text-blue-600 transition-colors">{pub.title}</h3>
                       <p className="text-[10px] text-slate-400 font-devanagari uppercase tracking-wider">{pub.category} • {pub.year}</p>
                    </div>
                 </a>
               ))}
-              {filteredPubs.length === 0 && <p className="col-span-full text-center py-20 text-slate-400 font-devanagari">कोई पत्रिका नहीं मिली।</p>}
+              {filteredPubs.length === 0 && !loading && (
+                <div className="col-span-full text-center py-32 bg-white rounded-3xl border border-dashed border-slate-200">
+                  <p className="text-slate-400 font-devanagari text-lg mb-2">कोई पत्रिका नहीं मिली।</p>
+                  <p className="text-slate-300 font-devanagari text-sm">सर्च कीवर्ड बदलें या एडमिन पैनल से नया प्रकाशन जोड़ें।</p>
+                </div>
+              )}
            </div>
          )}
       </div>
@@ -166,7 +201,7 @@ const PublicShelf: React.FC = () => {
               <h4 className="font-bold text-slate-800 font-devanagari">सिंक लिंक</h4>
               <div className="flex items-center gap-2">
                  <input disabled value={settings.sync_link || 'library.sync/mobile'} className="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-xs font-mono" />
-                 <button className="bg-slate-800 text-white p-2 rounded-lg"><Smartphone size={16} /></button>
+                 <button className="bg-slate-800 text-white p-2 rounded-lg transition-transform active:scale-90"><Smartphone size={16} /></button>
               </div>
            </div>
         </div>
