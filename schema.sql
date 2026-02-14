@@ -1,9 +1,9 @@
 
--- Enable Row Level Security
-ALTER DATABASE postgres SET "app.jwt_secret" TO 'your-secret-here';
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Publications Table
-CREATE TABLE publications (
+CREATE TABLE IF NOT EXISTS publications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
   description TEXT,
@@ -17,8 +17,8 @@ CREATE TABLE publications (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- Notices Table (Scrolling Ticker)
-CREATE TABLE notices (
+-- Notices Table
+CREATE TABLE IF NOT EXISTS notices (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   content TEXT NOT NULL,
   active BOOLEAN DEFAULT true,
@@ -26,32 +26,38 @@ CREATE TABLE notices (
 );
 
 -- Site Settings Table
-CREATE TABLE site_settings (
+CREATE TABLE IF NOT EXISTS site_settings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   key TEXT UNIQUE NOT NULL,
   value TEXT,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- Analytics / Visitor Log
-CREATE TABLE analytics (
+-- Analytics Table
+CREATE TABLE IF NOT EXISTS analytics (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  visitor_id TEXT, -- Fingerprint/Session ID
+  visitor_id TEXT,
   device TEXT,
   platform TEXT,
   path TEXT,
-  ip_address TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- RLS Policies
+-- Enable RLS
 ALTER TABLE publications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE analytics ENABLE ROW LEVEL SECURITY;
 
--- Public can read everything except analytics
+-- Recreate Policies to ensure public access
+DROP POLICY IF EXISTS "Public read publications" ON publications;
 CREATE POLICY "Public read publications" ON publications FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public read notices" ON notices;
 CREATE POLICY "Public read notices" ON notices FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public read settings" ON site_settings;
 CREATE POLICY "Public read settings" ON site_settings FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public insert analytics" ON analytics;
 CREATE POLICY "Public insert analytics" ON analytics FOR INSERT WITH CHECK (true);
