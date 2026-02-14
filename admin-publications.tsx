@@ -1,6 +1,7 @@
 
+// Import React to resolve namespace error for React.FC usage
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit2, Trash2, ExternalLink, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Plus, Search, Trash2, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from './lib/supabase.ts';
 import { Publication } from './types.ts';
 
@@ -8,15 +9,18 @@ const AdminPublications: React.FC = () => {
   const [search, setSearch] = useState('');
   const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchPubs = async () => {
     try {
       setLoading(true);
+      setError(null);
       const { data, error } = await supabase.from('publications').select('*').order('created_at', { ascending: false });
       if (error) throw error;
-      if (data) setPublications(data);
+      setPublications(data || []);
     } catch (err: any) {
-      console.error("Fetch Publications Error:", err);
+      console.error("Fetch Error:", err);
+      setError("डेटा लोड करने में विफल: " + (err.message || "Network Error"));
     } finally {
       setLoading(false);
     }
@@ -28,31 +32,41 @@ const AdminPublications: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm("क्या आप वाकई इस प्रकाशन को हटाना चाहते हैं?")) return;
-    const { error } = await supabase.from('publications').delete().eq('id', id);
-    if (!error) fetchPubs();
-    else alert("डिलीट करने में त्रुटि: " + error.message);
+    try {
+      const { error } = await supabase.from('publications').delete().eq('id', id);
+      if (error) throw error;
+      fetchPubs();
+    } catch (err: any) {
+      alert("डिलीट करने में त्रुटि: " + err.message);
+    }
   };
 
   const handleAdd = async () => {
     const title = prompt("पत्रिका का शीर्षक:");
+    if (!title) return;
     const url = prompt("Flipbook URL (e.g., https://online.anyflip.com/...):");
+    if (!url) return;
     const cover = prompt("कवर इमेज URL (वैकल्पिक):");
-    if (!title || !url) return;
 
-    const { error } = await supabase.from('publications').insert({
-      title,
-      flipbook_url: url,
-      cover_url: cover || '',
-      category: 'पत्रिका',
-      year: new Date().getFullYear().toString(),
-      is_latest: true
-    });
+    try {
+      const { error } = await supabase.from('publications').insert({
+        title,
+        flipbook_url: url,
+        cover_url: cover || '',
+        category: 'पत्रिका',
+        year: new Date().getFullYear().toString(),
+        is_latest: true
+      });
 
-    if (!error) fetchPubs();
-    else alert("डेटा सेव करने में त्रुटि: " + error.message);
+      if (error) throw error;
+      fetchPubs();
+    } catch (err: any) {
+      console.error("Save Error:", err);
+      alert("डेटा सेव करने में त्रुटि: " + (err.message || "Failed to fetch. जाँचें कि Supabase URL सही है या नहीं।"));
+    }
   };
 
-  const filtered = publications.filter(p => p.title.toLowerCase().includes(search.toLowerCase()));
+  const filtered = publications.filter(p => (p.title || '').toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="space-y-6">
@@ -71,6 +85,13 @@ const AdminPublications: React.FC = () => {
         </button>
       </div>
 
+      {error && (
+        <div className="bg-red-50 border border-red-100 p-4 rounded-xl flex items-center gap-3 text-red-600 font-devanagari">
+          <AlertCircle size={20} />
+          <p>{error}</p>
+        </div>
+      )}
+
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3">
         <Search className="text-slate-400" size={20} />
         <input 
@@ -84,7 +105,10 @@ const AdminPublications: React.FC = () => {
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden min-h-[400px]">
         {loading ? (
-          <div className="flex items-center justify-center h-64"><Loader2 className="animate-spin text-blue-600" /></div>
+          <div className="flex flex-col items-center justify-center h-64 gap-4">
+            <Loader2 className="animate-spin text-blue-600" size={32} />
+            <p className="text-slate-400 font-devanagari">लोड हो रहा है...</p>
+          </div>
         ) : (
           <table className="w-full text-left">
             <thead className="bg-slate-50 text-slate-500 font-devanagari text-sm">
