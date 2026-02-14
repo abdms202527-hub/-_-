@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit2, Trash2, ExternalLink, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { supabase } from './lib/supabase';
-import { Publication } from './types';
+import { supabase } from './lib/supabase.ts';
+import { Publication } from './types.ts';
 
 const AdminPublications: React.FC = () => {
   const [search, setSearch] = useState('');
@@ -10,10 +10,16 @@ const AdminPublications: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchPubs = async () => {
-    setLoading(true);
-    const { data } = await supabase.from('publications').select('*').order('created_at', { ascending: false });
-    if (data) setPublications(data);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.from('publications').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      if (data) setPublications(data);
+    } catch (err: any) {
+      console.error("Fetch Publications Error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -24,17 +30,19 @@ const AdminPublications: React.FC = () => {
     if (!confirm("क्या आप वाकई इस प्रकाशन को हटाना चाहते हैं?")) return;
     const { error } = await supabase.from('publications').delete().eq('id', id);
     if (!error) fetchPubs();
+    else alert("डिलीट करने में त्रुटि: " + error.message);
   };
 
   const handleAdd = async () => {
-    // Basic prompt-based add for quick testing, replace with Modal for production
     const title = prompt("पत्रिका का शीर्षक:");
-    const url = prompt("Flipbook URL:");
+    const url = prompt("Flipbook URL (e.g., https://online.anyflip.com/...):");
+    const cover = prompt("कवर इमेज URL (वैकल्पिक):");
     if (!title || !url) return;
 
     const { error } = await supabase.from('publications').insert({
       title,
       flipbook_url: url,
+      cover_url: cover || '',
       category: 'पत्रिका',
       year: new Date().getFullYear().toString(),
       is_latest: true
@@ -91,7 +99,7 @@ const AdminPublications: React.FC = () => {
               {filtered.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4">
-                    <img src={p.cover_url || 'https://via.placeholder.com/50'} alt="cover" className="w-10 h-14 rounded object-cover shadow" />
+                    <img src={p.cover_url || 'https://via.placeholder.com/50x70?text=No+Img'} alt="cover" className="w-10 h-14 rounded object-cover shadow" />
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
@@ -106,14 +114,17 @@ const AdminPublications: React.FC = () => {
                      </a>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg" onClick={() => handleDelete(p.id)}>
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
+                    <button className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg" onClick={() => handleDelete(p.id)}>
+                      <Trash2 size={18} />
+                    </button>
                   </td>
                 </tr>
               ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-6 py-10 text-center text-slate-400 font-devanagari">कोई डेटा नहीं मिला।</td>
+                </tr>
+              )}
             </tbody>
           </table>
         )}

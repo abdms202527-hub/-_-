@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Megaphone, Plus, Trash2, Clock, Loader2 } from 'lucide-react';
-import { supabase } from './lib/supabase';
-import { Notice } from './types';
+import { supabase } from './lib/supabase.ts';
+import { Notice } from './types.ts';
 
 const AdminNotices: React.FC = () => {
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -11,10 +11,16 @@ const AdminNotices: React.FC = () => {
   const [saving, setSaving] = useState(false);
 
   const fetchNotices = async () => {
-    setLoading(true);
-    const { data } = await supabase.from('notices').select('*').order('created_at', { ascending: false });
-    if (data) setNotices(data);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.from('notices').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      if (data) setNotices(data);
+    } catch (err) {
+      console.error("Notice fetch error", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -23,14 +29,16 @@ const AdminNotices: React.FC = () => {
 
   const handleAdd = async () => {
     if (!newContent.trim()) return;
-    setSaving(true);
-    const { error } = await supabase.from('notices').insert({ content: newContent, active: true });
-    setSaving(false);
-    if (!error) {
+    try {
+      setSaving(true);
+      const { error } = await supabase.from('notices').insert({ content: newContent, active: true });
+      if (error) throw error;
       setNewContent('');
       fetchNotices();
-    } else {
-      alert("Error: " + error.message);
+    } catch (err: any) {
+      alert("सूचना जोड़ने में त्रुटि: " + err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -38,15 +46,11 @@ const AdminNotices: React.FC = () => {
     if (!confirm("क्या आप इस सूचना को हटाना चाहते हैं?")) return;
     const { error } = await supabase.from('notices').delete().eq('id', id);
     if (!error) fetchNotices();
+    else alert("डिलीट करने में त्रुटि: " + error.message);
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-         <span className="text-blue-600 text-sm font-devanagari flex items-center gap-2">
-             <div className="w-1 h-1 rounded-full bg-blue-600"></div> डिजिटल आर्काइव
-          </span>
-      </div>
       <h1 className="text-3xl font-bold text-slate-800 font-devanagari">सूचना प्रबंधन</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -78,29 +82,21 @@ const AdminNotices: React.FC = () => {
                 <div className="h-64 flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" /></div>
               ) : notices.length > 0 ? (
                 notices.map((notice) => (
-                  <div key={notice.id} className="p-5 bg-slate-50 border border-slate-100 rounded-2xl flex items-start gap-4 group">
-                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-blue-500">
-                      <Megaphone size={18} />
-                    </div>
+                  <div key={notice.id} className="p-5 bg-slate-50 border border-slate-100 rounded-2xl flex items-start gap-4">
                     <div className="flex-1">
-                      <p className="font-devanagari text-slate-700 leading-relaxed">{notice.content}</p>
+                      <p className="font-devanagari text-slate-700">{notice.content}</p>
                       <div className="flex items-center gap-4 mt-3">
-                        <span className="flex items-center gap-1.5 text-[10px] text-slate-400 font-devanagari">
-                          <Clock size={12} /> {new Date(notice.created_at).toLocaleDateString()}
+                        <span className="text-[10px] text-slate-400 font-devanagari">
+                          <Clock className="inline mr-1" size={12} /> {new Date(notice.created_at).toLocaleDateString()}
                         </span>
-                        <button 
-                          onClick={() => handleDelete(notice.id)}
-                          className="text-[10px] text-red-400 font-devanagari hover:text-red-600 transition-colors"
-                        >
-                          हटाएं
-                        </button>
+                        <button onClick={() => handleDelete(notice.id)} className="text-[10px] text-red-400 font-devanagari hover:underline">हटाएं</button>
                       </div>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="h-64 flex flex-col items-center justify-center text-slate-300">
-                   <p className="font-devanagari">कोई सक्रिय सूचना नहीं है।</p>
+                   <p className="font-devanagari">कोई सूचना नहीं मिली।</p>
                 </div>
               )}
             </div>
