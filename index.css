@@ -1,0 +1,47 @@
+:root {
+  --saffron: #FF9933;
+  --maroon: #800000;
+  --gold: #FFD700;
+  --cream: #FFFDD0;
+}
+
+body {
+  font-family: 'Mukta', sans-serif;
+  background-color: var(--cream);
+  color: var(--maroon);
+  background-image: url('https://www.transparenttextures.com/patterns/natural-paper.png');
+  overflow-x: hidden;
+  margin: 0;
+}
+
+.devotional-font {
+  font-family: 'Rozha One', serif;
+}
+
+.divine-bg {
+  background: radial-gradient(circle at center, #FFFDD0 0%, #FFE5B4 100%);
+}
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 20s linear infinite;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.8s ease-out forwards;
+}

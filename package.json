@@ -1,5 +1,5 @@
 {
-  "name": "digital-library-&-magazine-management-system",
+  "name": "ॐ-श्री-गुरुदत्त-विठ्ठल-मन्दिर",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,12 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/genai": "^1.41.0",
+    "@supabase/supabase-js": "2.39.7",
     "react": "^19.2.4",
     "lucide-react": "^0.564.0",
-    "recharts": "^3.7.0",
-    "react-dom": "^19.2.4",
-    "react-router-dom": "^7.13.0",
-    "@supabase/supabase-js": "^2.39.0"
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
