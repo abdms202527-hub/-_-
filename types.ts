@@ -1,54 +1,49 @@
 
-export interface AartiTiming {
-  id: string;
-  name: string;
-  time: string;
-}
-
-export interface GalleryImage {
-  id: string;
-  url: string;
-  caption: string;
-}
-
-export interface TempleEvent {
+export interface Publication {
   id: string;
   title: string;
-  date: string;
   description: string;
+  cover_url: string;
+  flipbook_url: string;
+  category: string;
+  year: string;
+  publish_date: string;
+  is_latest: boolean;
+  views: number;
 }
 
-export interface HomepageContent {
-  mainHeading: string;
-  heroTitle: string;
-  scrollingMessage: string;
-  welcomeMessage: string;
-  heroImage: string;
-  dailyThought: string;
-  footerLeftImage: string;
-  footerRightImage: string;
-  footerTitle: string;
-  footerDescription: string;
-  footerEmail: string;
-  footerPhone: string;
-  footerAddress: string;
-  footerMorningTime: string;
-  footerEveningTime: string;
-  todaysDarshanImage: string;
+export interface Notice {
+  id: string;
+  content: string;
+  active: boolean;
+  created_at: string;
 }
 
-export interface DonationInfo {
-  bankName: string;
-  accountNumber: string;
-  ifscCode: string;
-  upiId: string;
-  qrCodeUrl: string;
+export interface VisitorLog {
+  id: string;
+  time: string;
+  device: string;
+  token: string;
+  platform: string;
+  path: string;
 }
 
-export interface AppState {
-  homepage: HomepageContent;
-  aartiTimings: AartiTiming[];
-  gallery: GalleryImage[];
-  events: TempleEvent[];
-  donation: DonationInfo;
+export interface AnalyticsData {
+  totalVisitors: number;
+  todayVisits: number;
+  totalPublications: number;
+  popularMagazine: string;
+  trends: { date: string; count: number }[];
+  deviceDistribution: { name: string; value: number }[];
+}
+
+export interface SiteSettings {
+  logoUrl: string;
+  headline: string;
+  heroDescription: string;
+  footerText: string;
+  contactInfo: string;
+  mobileSyncLink: string;
+  backgroundPatternUrl: string;
+  divineImageUrl: string;
 }

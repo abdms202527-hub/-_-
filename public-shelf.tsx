@@ -166,7 +166,7 @@ const PublicShelf: React.FC = () => {
         </div>
       </div>
 
-      {/* Navigation - 2. Added Header Install Button */}
+      {/* Navigation */}
       <nav className="fixed top-12 left-0 right-0 p-4 md:p-8 flex items-center justify-between z-50">
         <div className="flex items-center gap-3 md:gap-5 bg-white/90 backdrop-blur-md px-3 md:px-6 py-2 md:py-3 rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl shadow-[#7f1d1d]/5 border border-white/50 ring-1 ring-[#7f1d1d]/5 max-w-[85vw]">
           <div className="w-10 h-10 md:w-16 md:h-16 bg-white rounded-xl md:rounded-3xl flex items-center justify-center shadow-md p-1.5 overflow-hidden shrink-0 border border-orange-100">
@@ -219,27 +219,29 @@ const PublicShelf: React.FC = () => {
         </div>
 
         <div className="relative z-10 text-center space-y-3 md:space-y-4 px-6 mb-6 md:mb-10 w-full max-w-6xl mx-auto flex flex-col items-center">
+          {/* पट्टी (Important Links) - Increased font size and made bolder */}
           <div className="mb-4 md:mb-8 flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full px-4">
-             <div className="flex items-center gap-2 md:gap-4 p-1.5 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
+             <div className="flex items-center gap-2 md:gap-4 p-2 md:p-3 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl">
                 {importantLinks.length > 0 ? importantLinks.map((link, i) => (
                   <a 
                     key={i} 
                     href={link.url} 
                     target="_blank" 
                     rel="noreferrer" 
-                    className="flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all font-devanagari text-[10px] md:text-xs font-black whitespace-nowrap group"
+                    className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2.5 md:py-3.5 rounded-xl text-white hover:bg-white/20 transition-all font-devanagari text-sm md:text-base font-black whitespace-nowrap group border border-white/5"
                   >
-                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500 opacity-60 group-hover:scale-125 transition-transform"></div>
+                    <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)] group-hover:scale-150 transition-transform"></div>
                     {link.title}
-                    <ExternalLink size={10} className="opacity-40 group-hover:opacity-100" />
+                    <ExternalLink size={14} className="opacity-60 group-hover:opacity-100" />
                   </a>
                 )) : (
-                  <span className="text-white/40 text-[10px] md:text-xs font-devanagari px-4 py-2 italic font-bold">महत्वपूर्ण लिंक उपलब्ध नहीं</span>
+                  <span className="text-white/40 text-xs md:text-sm font-devanagari px-4 py-2 italic font-bold">महत्वपूर्ण लिंक उपलब्ध नहीं</span>
                 )}
              </div>
           </div>
 
-          <h2 className="text-4xl md:text-7xl lg:text-8xl font-black font-devanagari leading-tight text-white drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] tracking-tight">
+          {/* Hero Title - Slightly reduced size for better balance */}
+          <h2 className="text-3xl md:text-5xl lg:text-6xl font-black font-devanagari leading-tight text-white drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] tracking-tight">
             {settings.hero_title || "समाज की ज्ञान संपदा"}
           </h2>
           
@@ -337,7 +339,6 @@ const PublicShelf: React.FC = () => {
          </section>
       </main>
 
-      {/* FOOTER - 3. Added Install Button in Footer Sidebar */}
       <footer className="bg-[#1a0505] text-white pt-20 pb-10 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-30"></div>
         <div className="absolute bottom-0 right-0 w-64 h-64 bg-orange-900/10 rounded-full blur-3xl -mb-32 -mr-32"></div>
